@@ -1,3 +1,6 @@
+NPM
+  npm outdated  : check all version in package.json
+
 ANDROID
 
 Edit & Rebuild android
