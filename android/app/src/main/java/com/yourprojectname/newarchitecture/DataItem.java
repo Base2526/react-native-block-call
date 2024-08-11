@@ -1,16 +1,16 @@
 package com.yourprojectname.newarchitecture;
 
-public class Item {
+public class DataItem {
 
     private int id;
     private String phoneNumber;
     private String detail;
     private String reporter;
 
-    public Item(){}
+    public DataItem(){}
 
     // Constructor
-    public Item(int id, String phoneNumber, String detail, String reporter) {
+    public DataItem(int id, String phoneNumber, String detail, String reporter) {
         this.id = id;
         this.phoneNumber = phoneNumber;
         this.detail = detail;

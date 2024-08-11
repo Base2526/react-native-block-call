@@ -15,10 +15,14 @@ import java.util.List;
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "mydatabase.db";
     private static final String TABLE_NAME = "mytable";
-    private static final String COL_1 = "ID";
-    private static final String COL_2 = "PHONE_NUMBER";
-    private static final String COL_3 = "DETAIL";
-    private static final String COL_4 = "REPORTER";
+    private static final String COL_ID = "ID";
+    private static final String COL_PHONE_NUMBER = "PHONE_NUMBER";
+    private static final String COL_DETAIL = "DETAIL";
+    private static final String COL_REPORTER = "REPORTER";
+    private static final String COL_STATUS = "STATUS";
+    private static final String COL_CREATE_AT = "CREATE_AT";
+    private static final String COL_UPDATE_AT = "UPDATE_AT";
+
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, 1);
@@ -26,7 +30,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE " + TABLE_NAME + " (ID INTEGER PRIMARY KEY AUTOINCREMENT, PHONE_NUMBER TEXT, DETAIL TEXT, REPORTER TEXT, UPDATE_AT DATE DEFAULT CURRENT_TIMESTAMP)");
+        db.execSQL("CREATE TABLE " + TABLE_NAME + " ("+
+                                        COL_ID +" INTEGER PRIMARY KEY AUTOINCREMENT, "+
+                                        COL_PHONE_NUMBER +" TEXT, "+
+                                        COL_DETAIL +" TEXT, "+
+                                        COL_REPORTER +" TEXT, "+
+                                        COL_STATUS +" INTEGER DEFAULT 1, "+
+                                        COL_CREATE_AT +" DATE DEFAULT CURRENT_TIMESTAMP, " +
+                                        COL_UPDATE_AT +" DATE DEFAULT CURRENT_TIMESTAMP)");
     }
 
     @Override
@@ -36,25 +47,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // Add a new entry
-    public boolean addData(Item i) {
+    public boolean addData(DataItem i) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
-        contentValues.put(COL_2, i.getPhoneNumber());
-        contentValues.put(COL_3, i.getDetail());
-        contentValues.put(COL_4, i.getReporter());
+        contentValues.put(COL_PHONE_NUMBER, i.getPhoneNumber());
+        contentValues.put(COL_DETAIL, i.getDetail());
+        contentValues.put(COL_REPORTER, i.getReporter());
         long result = db.insert(TABLE_NAME, null, contentValues);
         return result != -1; // returns true if insert was successful
     }
 
-    public boolean addDatas(List<Item> datas) {
+    public boolean addDatas(List<DataItem> datas) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.beginTransaction(); // Start transaction
         try {
-            for (Item data : datas) {
+            for (DataItem data : datas) {
                 ContentValues contentValues = new ContentValues();
-                contentValues.put(COL_2, data.getPhoneNumber());
-                contentValues.put(COL_3, data.getDetail());
-                contentValues.put(COL_4, data.getReporter());
+                contentValues.put(COL_PHONE_NUMBER, data.getPhoneNumber());
+                contentValues.put(COL_DETAIL, data.getDetail());
+                contentValues.put(COL_REPORTER, data.getReporter());
                 long result = db.insert(TABLE_NAME, null, contentValues);
                 if (result == -1) {
                     return false; // If any insert fails, rollback transaction
@@ -73,6 +84,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 //        return db.rawQuery("SELECT * FROM " + TABLE_NAME, null);
 //    }
 
+
     // Get entry by ID
     public String getDataById(String id) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -80,10 +92,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         if (cursor != null) {
             if (cursor.moveToFirst()) {
-                String result = "{ \"id\": \"" + cursor.getString(0)
-                                + "\", \"phoneNumber\": \"" + cursor.getString(1) + "\""
-                                + "\", \"detail\": \"" + cursor.getString(2) + "\""
-                                + "\", \"reporter\": \"" + cursor.getString(3) + "\" }";
+                String result = "{ \""+COL_ID+"\": \"" + cursor.getString(0)
+                                + "\", \""+COL_PHONE_NUMBER+"\": \"" + cursor.getString(1) + "\""
+                                + "\", \""+COL_DETAIL+"\": \"" + cursor.getString(2) + "\""
+                                + "\", \""+ COL_REPORTER +"\": \"" + cursor.getString(3) + "\" }";
                 cursor.close();
                 return result; // return JSON string
             }
@@ -99,10 +111,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         if (cursor != null) {
             if (cursor.moveToFirst()) {
-                String result = "{ \"id\": \"" + cursor.getString(0)
-                                + "\", \"phoneNumber\": \"" + cursor.getString(1) + "\" "
-                                + "\", \"detail\": \"" + cursor.getString(2) + "\" "
-                                + "\", \"reporter\": \"" + cursor.getString(3) + "\" }";
+                String result = "{ \""+ COL_ID +"\": \"" + cursor.getString(0)
+                                + "\", \""+ COL_PHONE_NUMBER +"\": \"" + cursor.getString(1) + "\" "
+                                + "\", \""+ COL_DETAIL +"\": \"" + cursor.getString(2) + "\" "
+                                + "\", \""+ COL_REPORTER +"\": \"" + cursor.getString(3) + "\" }";
                 cursor.close();
                 return result; // return JSON string
             }
@@ -119,10 +131,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         while (cursor.moveToNext()) {
             WritableMap item = Arguments.createMap();
-            item.putString("id", String.valueOf(cursor.getInt(0))); // Assuming ID is an integer
-            item.putString("phoneNumber", cursor.getString(1));
-            item.putString("detail", cursor.getString(2));
-            item.putString("reporter", cursor.getString(3));
+            item.putString(COL_ID, String.valueOf(cursor.getInt(0))); // Assuming ID is an integer
+            item.putString(COL_PHONE_NUMBER, cursor.getString(1));
+            item.putString(COL_DETAIL, cursor.getString(2));
+            item.putString(COL_REPORTER, cursor.getString(3));
             results.pushMap(item);
         }
         cursor.close(); // Always close the cursor to avoid memory leaks
@@ -130,13 +142,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // Update an entry
-    public boolean updateData(Item i) {
+    public boolean updateData(DataItem i) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
 //        contentValues.put(COL_1, i.getId());
-        contentValues.put(COL_2, i.getPhoneNumber());
-        contentValues.put(COL_3, i.getDetail());
-        contentValues.put(COL_4, i.getReporter());
+        contentValues.put(COL_PHONE_NUMBER, i.getPhoneNumber());
+        contentValues.put(COL_DETAIL, i.getDetail());
+        contentValues.put(COL_REPORTER, i.getReporter());
         db.update(TABLE_NAME, contentValues, "ID = ?", new String[]{String.valueOf(i.getId())});
         return true;
     }

@@ -1,3 +1,5 @@
+ANDROID
+
 Edit & Rebuild android
 step
  - cd android & ./gradlew clean & .. & npx react-native run-android & enjoy
@@ -12,3 +14,6 @@ Error : Could not connect to React Native development server on Android
 - Go to Dev Settings → Debug server host for device.
 - Type in your machine's IP address and the port of the local dev server (e.g. 10.0.1.1:8081).
 - Go back to the Developer menu and select Reload JS.
+
+
+IOS

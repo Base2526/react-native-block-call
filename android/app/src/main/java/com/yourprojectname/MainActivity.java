@@ -4,14 +4,29 @@ import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.ReactRootView;
 import android.Manifest;
+import android.content.ContentResolver;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.CallLog;
 import android.util.Log;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 public class MainActivity extends ReactActivity {
+
+  private static final int PERMISSIONS_REQUEST_CODE = 100;
 
   /**
    * Returns the name of the main component registered from JavaScript. This is used to schedule
@@ -53,68 +68,100 @@ public class MainActivity extends ReactActivity {
     }
   }
 
-  private static final int REQUEST_CODE = 100;
-  private static final int REQUEST_CODE_READ_CALL_LOG = 101;
-  private static final int REQUEST_CODE_ANSWER_PHONE_CALLS = 102;
-
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.activity_main);
 
-//    checkPermission();
-    checkPermissionANSWER_PHONE_CALLS();
-//    checkPermissionREAD_CALL_LOG();
+      requestPermissions();
   }
 
-  private void checkPermission() {
-    if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
-      // Request permission
-      ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_PHONE_STATE}, REQUEST_CODE);
-    } else {
-      // Permission already granted
-      Log.d("MainActivity", "Permission granted. You can access phone state.");
-      // Call your method that requires the permission here
+  private void requestPermissions() {
+    String[] permissions = {
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.READ_CALL_LOG,
+            Manifest.permission.RECEIVE_SMS,
+            Manifest.permission.ANSWER_PHONE_CALLS,
+            Manifest.permission.READ_SMS,
+    };
+
+    List<String> permissionsNeeded = new ArrayList<>();
+    for (String permission : permissions) {
+      if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+        permissionsNeeded.add(permission);
+      }
     }
-  }
 
-  private void checkPermissionREAD_CALL_LOG() {
-    if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
-      // Request permission
-      ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CALL_LOG}, REQUEST_CODE_READ_CALL_LOG);
+    if (!permissionsNeeded.isEmpty()) {
+      ActivityCompat.requestPermissions(this, permissionsNeeded.toArray(new String[0]), PERMISSIONS_REQUEST_CODE);
     } else {
-      // Permission already granted
-      Log.d("MainActivity", "Permission granted. You can access phone state.");
-      // Call your method that requires the permission here
-    }
-  }
-
-  private void checkPermissionANSWER_PHONE_CALLS() {
-    if (ContextCompat.checkSelfPermission(this, Manifest.permission.ANSWER_PHONE_CALLS) != PackageManager.PERMISSION_GRANTED) {
-      // Request permission
-      ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ANSWER_PHONE_CALLS}, REQUEST_CODE_ANSWER_PHONE_CALLS);
-    } else {
-      // Permission already granted
-      Log.d("MainActivity", "Permission granted. You can access phone state.");
-      // Call your method that requires the permission here
+      // All permissions are already granted
+      onPermissionsGranted();
     }
   }
 
   @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    if (requestCode == REQUEST_CODE) {
-      if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-        Log.d("MainActivity", "Permission granted by user.");
-        // Permission granted, call your method that requires the permission here
-      } else {
-        Log.d("MainActivity", "Permission denied by user.");
-        // Handle the case where the permission was denied
+
+    if (requestCode == PERMISSIONS_REQUEST_CODE) {
+      boolean allGranted = true;
+      for (int result : grantResults) {
+        if (result != PackageManager.PERMISSION_GRANTED) {
+          allGranted = false;
+          break;
+        }
       }
-    }else if(requestCode == REQUEST_CODE_READ_CALL_LOG){
-      Log.d("MainActivity", "REQUEST_CODE_READ_CALL_LOG.");
-    }else if(requestCode == REQUEST_CODE_ANSWER_PHONE_CALLS){
-      Log.d("MainActivity", "REQUEST_CODE_ANSWER_PHONE_CALLS.");
+
+      if (allGranted) {
+        // All permissions granted
+        onPermissionsGranted();
+      } else {
+        // Handle the case where permissions are denied
+        Toast.makeText(this, "Some permissions were denied", Toast.LENGTH_SHORT).show();
+      }
+    }
+  }
+
+  private void onPermissionsGranted() {
+    // Your logic here, e.g., accessing contacts, starting the camera, or accessing location
+//    readOldSms();
+    fetchOldCallLogs();
+    Toast.makeText(this, "All permissions granted!", Toast.LENGTH_SHORT).show();
+  }
+
+  private void readOldSms() {
+    Uri smsUri = Uri.parse("content://sms/");
+    Cursor cursor = getContentResolver().query(smsUri, null, null, null, null);
+
+    if (cursor != null) {
+      while (cursor.moveToNext()) {
+        String address = cursor.getString(cursor.getColumnIndexOrThrow("address"));
+        String body = cursor.getString(cursor.getColumnIndexOrThrow("body"));
+        String date = cursor.getString(cursor.getColumnIndexOrThrow("date"));
+
+        // Log or display the SMS
+        Log.d("OldSms", "From: " + address + ", Body: " + body + ", Date: " + date);
+      }
+      cursor.close();
+    }
+  }
+
+  private void fetchOldCallLogs() {
+    Uri callLogUri = Uri.parse("content://call_log/calls");
+    ContentResolver contentResolver = getContentResolver();
+    Cursor cursor = contentResolver.query(callLogUri, null, null, null, null);
+
+    if (cursor != null) {
+      while (cursor.moveToNext()) {
+        String number = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.NUMBER));
+        String type = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE));
+        long date = cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls.DATE));
+
+        // Process the call log data here
+        Log.d("OldCallLog", "Number: " + number + ", Type: " + type + ", Date: " + new Date(date));
+      }
+      cursor.close();
     }
   }
 }

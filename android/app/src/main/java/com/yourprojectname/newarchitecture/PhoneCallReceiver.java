@@ -7,7 +7,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Bundle;
+import android.provider.Telephony;
 import android.telecom.TelecomManager;
+import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import androidx.core.app.ActivityCompat;
@@ -18,33 +21,53 @@ public class PhoneCallReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d("PhoneCallReceiver", "Broadcast received");
-        if (intent.getAction().equals(TelephonyManager.ACTION_PHONE_STATE_CHANGED)) {
-            String state = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
-            if (TelephonyManager.EXTRA_STATE_RINGING.equals(state)) {
-                // Check permissions using the context parameter
-                if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED &&
-                        ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_NUMBERS) != PackageManager.PERMISSION_GRANTED &&
-                        ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
-                    // Log the request for permissions
-                    Log.d("PhoneCallReceiver", "requestPermissions");
-                    return;
-                }
+        Log.d("PhoneCallReceiver", "Broadcast received " + intent.getAction());
 
-                String incomingNumber = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER);
-                // Log or handle the incoming number
-                if (incomingNumber != null) {
-                    // Do something with the incoming number
-                    Log.d("PhoneCallReceiver", "Incoming number: " + incomingNumber);
-                    try {
-                        if (isBlockedNumber(context, incomingNumber)) {
-                            endCall(context);
-                        }
-                    } catch (JSONException e) {
-                        throw new RuntimeException(e);
+        switch (intent.getAction()){
+            case "android.intent.action.PHONE_STATE":{
+                String state = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
+                if (TelephonyManager.EXTRA_STATE_RINGING.equals(state)) {
+                    // Check permissions using the context parameter
+                    if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED &&
+                            ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_NUMBERS) != PackageManager.PERMISSION_GRANTED &&
+                            ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+                        // Log the request for permissions
+                        Log.d("PhoneCallReceiver", "requestPermissions");
+                        return;
                     }
-                } else {
-                    Log.e("PhoneCallReceiver", "Handle the null case");
+
+                    String incomingNumber = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER);
+                    // Log or handle the incoming number
+                    if (incomingNumber != null) {
+                        // Do something with the incoming number
+                        Log.d("PhoneCallReceiver", "Incoming number: " + incomingNumber);
+                        try {
+                            if (isBlockedNumber(context, incomingNumber)) {
+                                Log.d("PhoneCallReceiver", "Blocking number: " + incomingNumber);
+                                endCall(context);
+                            }
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
+                    } else {
+                        Log.e("PhoneCallReceiver", "Handle the null case");
+                    }
+                }
+                break;
+            }
+            case "android.provider.Telephony.SMS_RECEIVED":{
+                Bundle bundle = intent.getExtras();
+                if (bundle != null) {
+                    Object[] pdus = (Object[]) bundle.get("pdus");
+                    if (pdus != null) {
+                        for (Object pdu : pdus) {
+                            SmsMessage smsMessage = SmsMessage.createFromPdu((byte[]) pdu);
+                            String messageBody = smsMessage.getMessageBody();
+                            String sender = smsMessage.getDisplayOriginatingAddress();
+                            // Handle the message here
+                            System.out.println("SMS received from: " + sender + " Message: " + messageBody);
+                        }
+                    }
                 }
             }
         }
