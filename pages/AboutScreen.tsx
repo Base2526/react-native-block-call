@@ -1,17 +1,19 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 
-const SettingsScreen: React.FC = () => {
+const AboutScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerText}>+61 450 228 714</Text>
         <Text style={styles.subHeaderText}>No results found</Text>
       </View>
+
       <TextInput
         style={styles.input}
         placeholder="Tell us who this is"
       />
+
       <View style={styles.actionsContainer}>
         <TouchableOpacity style={styles.actionButton}>
           <Text style={styles.actionText}>Call</Text>
@@ -26,16 +28,19 @@ const SettingsScreen: React.FC = () => {
           <Text style={styles.actionText}>Report</Text>
         </TouchableOpacity>
       </View>
+
       <View style={styles.callHistory}>
         <Text style={styles.callText}>2023/11/16 Thu 10:22</Text>
         <Text style={styles.callSubText}>Incoming call • 31s</Text>
         <Text style={styles.callText}>2023/11/16 Thu 10:01</Text>
         <Text style={styles.callSubText}>Not answered</Text>
       </View>
+
       <TextInput
         style={styles.input}
         placeholder="Tell us who this is"
       />
+
       <TouchableOpacity style={styles.searchButton}>
         <Text style={styles.searchText}>Search more info for this number</Text>
       </TouchableOpacity>
@@ -108,4 +113,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SettingsScreen;
+export default AboutScreen;

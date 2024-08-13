@@ -10,10 +10,12 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.CallLog;
+import android.provider.ContactsContract;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -98,6 +100,37 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
         promise.resolve(result);
     }
 
+    private ContactInfo getContactInfo(String phoneNumber) {
+        String contactName = "Unknown";
+        String photoUri = null;
+        ContentResolver contentResolver = getReactApplicationContext().getContentResolver();
+        Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phoneNumber));
+        Cursor cursor = contentResolver.query(uri, new String[]{
+                ContactsContract.PhoneLookup.DISPLAY_NAME,
+                ContactsContract.PhoneLookup.PHOTO_URI
+        }, null, null, null);
+
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.PhoneLookup.DISPLAY_NAME));
+                photoUri = cursor.getString(cursor.getColumnIndex(ContactsContract.PhoneLookup.PHOTO_URI));
+            }
+            cursor.close();
+        }
+
+        return new ContactInfo(contactName, photoUri); // Return contact name and photo URI
+    }
+
+    private static class ContactInfo {
+        String name;
+        String photoUri;
+
+        ContactInfo(String name, String photoUri) {
+            this.name = name;
+            this.photoUri = photoUri;
+        }
+    }
+
     @ReactMethod
     public void fetchCallLogs(Promise promise){
         Uri callLogUri = Uri.parse("content://call_log/calls");
@@ -110,11 +143,16 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
                 String type = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE));
                 String date = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.DATE));
 
+                // Fetch contact name associated with the number
+                ContactInfo contactInfo = getContactInfo(number);
+
                 // Process the call log data here
                 Log.d("OldCallLog", "Number: " + number + ", Type: " + type + ", Date: " + date);
 
                 // Create a WritableMap for each CallItem
                 WritableMap callItem = Arguments.createMap();
+                callItem.putString("name", contactInfo.name); // Add the contact name to the call item
+                callItem.putString("photoUri", contactInfo.photoUri); // Add the contact photo URI
                 callItem.putString("number", number);
                 callItem.putString("type", type);
                 callItem.putString("date", date);
@@ -136,21 +174,28 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
         if (cursor != null) {
             WritableArray smsList = Arguments.createArray();
             while (cursor.moveToNext()) {
-                String address = cursor.getString(cursor.getColumnIndexOrThrow("address"));
+                String number = cursor.getString(cursor.getColumnIndexOrThrow("address"));
                 String body = cursor.getString(cursor.getColumnIndexOrThrow("body"));
                 String date = cursor.getString(cursor.getColumnIndexOrThrow("date"));
 
                 // Log or display the SMS
-                Log.d("OldSms", "From: " + address + ", Body: " + body + ", Date: " + date);
+                Log.d("OldSms", "From: " + number + ", Body: " + body + ", Date: " + date);
 
-                // Create a WritableMap for each CallItem
-                WritableMap callItem = Arguments.createMap();
-                callItem.putString("address", address);
-                callItem.putString("body", body);
-                callItem.putString("date", date);
+                // Fetch contact name associated with the number
+                ContactInfo contactInfo = getContactInfo(number);
+
+                // Create a WritableMap for each smsItem
+                WritableMap smsItem = Arguments.createMap();
+                smsItem.putString("number", number);
+                smsItem.putString("body", body);
+                smsItem.putString("date", date);
+
+                smsItem.putString("name", contactInfo.name); // Add contact name
+                smsItem.putString("photoUri", contactInfo.photoUri); // Add contact photo URI
+
 
                 // Add the WritableMap to the WritableArray
-                smsList.pushMap(callItem);
+                smsList.pushMap(smsItem);
             }
             cursor.close();
             promise.resolve(smsList);

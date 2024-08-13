@@ -83,6 +83,7 @@ public class MainActivity extends ReactActivity {
             Manifest.permission.RECEIVE_SMS,
             Manifest.permission.ANSWER_PHONE_CALLS,
             Manifest.permission.READ_SMS,
+            Manifest.permission.READ_CONTACTS
     };
 
     List<String> permissionsNeeded = new ArrayList<>();
