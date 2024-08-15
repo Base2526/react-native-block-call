@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, StyleSheet, NativeModules } from 'react-native';
-// Importing the Icon component
-import Icon from 'react-native-vector-icons/Ionicons';
+import { View, Text, TouchableOpacity, Image, StyleSheet, NativeModules, Alert } from 'react-native';
+import { SwipeListView } from 'react-native-swipe-list-view'; // Importing SwipeListView
+import Icon from 'react-native-vector-icons/Ionicons'; // Importing the Icon component
 import _ from "lodash"
+import * as utils from "../utils"
 
 const { DatabaseHelper } = NativeModules;
 
@@ -54,27 +55,38 @@ function getDate(format: string = 'MM/DD'): string {
 const MyBlocklistScreen = () => {
   const [smss, setSmss] = useState([]);
 
-  useEffect(()=>{
-    DatabaseHelper.fetchSmsLogs()
-    .then((response: any) => {
-        console.log("fetchSmsLogs response :", response)
+  
+  useEffect(async()=>{
 
-        const smss = [];
-        _.map(response, (item, i)=>{
-          // {"address": "0817316162", "body": "0817316162 พยายามติดต่อคุณเวลา21:09น.This number tried to contact you.", "date": "1538489392080"}
-          smss.push({
-            id: i.toString(),
-            name: item.name,
-            phone: item.number,
-            time: getDate(item.date),
-            image: item.photoUri, // Placeholder image URL
-            note: item.body, // Example note for multiline text
-            callCount: Math.floor(Math.random() * 10), // Random call count for each contact
-          });
-        })
-        setSmss(smss)
-    })
-    .catch((error: any) => console.log(error));
+    let smslogs = await utils.getObject('smslogs');
+
+    console.log("smslogs :", smslogs);
+
+    if(smslogs === null){
+      DatabaseHelper.fetchSmsLogs()
+      .then((response: any) => {
+          console.log("fetchSmsLogs response :", response)
+  
+          const smss = [];
+          _.map(response, (item, i)=>{
+            // {"address": "0817316162", "body": "0817316162 พยายามติดต่อคุณเวลา21:09น.This number tried to contact you.", "date": "1538489392080"}
+            smss.push({
+              id: i.toString(),
+              name: item.name,
+              phone: item.number,
+              time: getDate(item.date),
+              image: item.photoUri, // Placeholder image URL
+              note: item.body, // Example note for multiline text
+              callCount: Math.floor(Math.random() * 10), // Random call count for each contact
+            });
+          })
+          setSmss(smss)
+      })
+      .catch((error: any) => console.log(error));
+    }else{
+      setSmss(smslogs)
+    }
+  
   }, [])
 
   const renderItem = ({ item }: { item: Contact }) => (
@@ -91,32 +103,64 @@ const MyBlocklistScreen = () => {
       <View style={styles.timeContainer}>
         <Text style={styles.time}>{item.time}</Text>
         <View style={styles.callCountContainer}>
-          <Text style={styles.callCount}>{item.callCount.toString()}</Text> 
+          {/* <Text style={styles.callCount}>{item.callCount.toString()}</Text>  */}
         </View>
       </View>
     </View>
   );
 
+  // Function to handle block action
+  const handleBlock = (phone: string) => {
+    Alert.alert(
+      "Block Contact",
+      `Are you sure you want to block ${phone}?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { text: "OK", onPress: () => console.log(`Blocked: ${phone}`) } // Implement your blocking logic here
+      ]
+    );
+  };
+
+  const renderHiddenItem = (data: { item: sms }) => (
+    <View style={styles.hiddenContainer}>
+      <TouchableOpacity style={styles.blockButton} onPress={() => handleBlock(data.item.phone)}>
+        <Text style={styles.blockText}>Block</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
-    <FlatList
-      data={smss}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.id}
-      style={styles.list}
-    />
+    // <FlatList
+    //   data={smss}
+    //   renderItem={renderItem}
+    //   keyExtractor={(item) => item.id}
+    //   style={styles.list}
+    // />
+
+    <SwipeListView
+    data={smss}
+    renderItem={renderItem}
+    renderHiddenItem={renderHiddenItem}
+    keyExtractor={(item) => item.id}
+    rightOpenValue={-75} // Width of the hidden block button
+    style={styles.list}
+  />
   );
 };
 
 const styles = StyleSheet.create({
   list: {
-    padding: 10,
+    // padding: 10,
   },
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start', // Align items to the start
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    // borderBottomWidth: 1,
+    backgroundColor: '#ccc',
   },
   image: {
     width: 50,
@@ -126,6 +170,22 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {
     flex: 1, // Allows the name and phone to take available space
+  },
+  hiddenContainer: {
+    // backgroundColor: '#FF3B30',
+    flex: 1,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    paddingRight: 15,
+  },
+  blockButton: {
+    // backgroundColor: '#FF3B30',
+    // padding: 15,
+    borderRadius: 5,
+  },
+  blockText: {
+    color: '#000',
+    fontWeight: 'bold',
   },
   name: {
     fontWeight: 'bold',

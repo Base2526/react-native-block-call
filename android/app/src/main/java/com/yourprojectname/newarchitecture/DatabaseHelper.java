@@ -14,12 +14,13 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "mydatabase.db";
-    private static final String TABLE_NAME = "mytable";
+    private static final String TABLE_NAME = "BLOCK";
     private static final String COL_ID = "ID";
     private static final String COL_PHONE_NUMBER = "PHONE_NUMBER";
     private static final String COL_DETAIL = "DETAIL";
     private static final String COL_REPORTER = "REPORTER";
     private static final String COL_STATUS = "STATUS";
+    private static final String COL_TYPE   = "TYPE";
     private static final String COL_CREATE_AT = "CREATE_AT";
     private static final String COL_UPDATE_AT = "UPDATE_AT";
 

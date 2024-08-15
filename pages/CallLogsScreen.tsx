@@ -1,28 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { NativeModules, View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { NativeModules, View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { SwipeListView } from 'react-native-swipe-list-view'; // Importing SwipeListView
 import Icon from 'react-native-vector-icons/Ionicons'; // Importing the Icon component
-import _ from "lodash"
+import _ from "lodash";
 
 import CallLogsDetailModal from '../modal/CallLogsDetailModal';
+import * as utils from "../utils"
 
 const { DatabaseHelper } = NativeModules;
-
-// const generateContacts = (count: number) => {
-//     const contacts = [];
-//     for (let i = 1; i <= count; i++) {
-//       contacts.push({
-//         id: i.toString(),
-//         name: `Contact ${i}`,
-//         phone: `+1 ${Math.floor(Math.random() * 900 + 100)} ${Math.floor(Math.random() * 900 + 100)} ${Math.floor(Math.random() * 9000 + 1000)}`,
-//         time: `${Math.floor(Math.random() * 12 + 1)}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')} ${Math.random() < 0.5 ? 'AM' : 'PM'}`,
-//         image: 'https://via.placeholder.com/50', // Placeholder image URL
-//       });
-//     }
-//     return contacts;
-//   };
-
-// // Sample data for the contact list
-// const contacts = generateContacts(10);
 
 // Define the type for the contact item
 interface Contact {
@@ -49,77 +34,123 @@ function getDate(format: string = 'MM/DD'): string {
   }
 }
 
-const CallLogsScreen: React.FC<Props> = ({ navigation }) => {
+const CallLogsScreen: React.FC = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [contacts, setContacts] = useState([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
 
-  useEffect(()=>{
-    DatabaseHelper.fetchCallLogs()
-    .then((response: any) => {
-        console.log("fetchCallLogs response :", response)
-        // {"date": "1723250685093", "name": "Unknown", "number": "1234567890", "type": "2", "photoUri": null}
+  useEffect(async() => {
+    let calllogs = await utils.getObject('calllogs');
+
+    // console.log("calllogs :", calllogs);
+    if(calllogs === null){
+      DatabaseHelper.fetchCallLogs()
+      .then(async(response: any) => {
         const contacts = [];
-        _.map(response, (item, i)=>{
+        _.map(response, (item, i) => {
           contacts.push({
             id: i.toString(),
             name: item.name,
             phone: item.number,
-            time: getDate( item.date ),
+            time: getDate(item.date),
             image: item.photoUri,
           });
-        })
-        setContacts(contacts)
-    })
-    .catch((error: any) => console.log(error));
-  }, [])
- 
-  const openModal = () => {
-    setModalVisible(true);
-  };
+        });
+        setContacts(contacts);
+        await utils.saveObject('calllogs', contacts);
+      })
+      .catch((error: any) => console.log(error));
+    }else{
+      setContacts(calllogs);
+    }
+  }, []);
 
-  const closeModal = () => {
-    setModalVisible(false);
+  // const openModal = () => {
+  //   setModalVisible(true);
+  // };
+
+  // const closeModal = () => {
+  //   setModalVisible(false);
+  // };
+
+  // Function to handle block action
+  const handleBlock = (phone: string) => {
+    Alert.alert(
+      "Block Contact",
+      `Are you sure you want to block ${phone}?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { text: "OK", onPress: () => console.log(`Blocked: ${phone}`) } // Implement your blocking logic here
+      ]
+    );
   };
 
   const renderItem = ({ item }: { item: Contact }) => (
-    <TouchableOpacity style={styles.itemContainer} onPress={()=>{ openModal() }} onLongPress={()=>Alert.alert("onLongPress")}>
+    <TouchableOpacity style={styles.itemContainer} onPress={() => { navigation.navigate("CallLogsDetail"); }} onLongPress={() => Alert.alert("onLongPress")}>
       <Image source={{ uri: item.image }} style={styles.image} />
       <View style={styles.detailsContainer}>
-        {/* <Text style={styles.name}>{item.name}</Text> */}
-        {
-          item.name === 'Unknown' ? <></> : <Text style={styles.name}>{item.name}</Text>
-        }
+        {item.name === 'Unknown' ? null : <Text style={styles.name}>{item.name}</Text>}
         <Text style={styles.phone}>{item.phone}</Text>
-      </View> 
+      </View>
       <View style={styles.timeContainer}>
         <Text style={styles.time}>{item.time}</Text>
-        <Icon name="call" size={20} color="#007AFF" style={styles.icon} /> 
-      </View> 
+        <Icon name="call" size={20} color="#007AFF" style={styles.icon} />
+      </View>
     </TouchableOpacity>
+  );
+
+  const renderHiddenItem = (data: { item: Contact }) => (
+    <View style={styles.hiddenContainer}>
+      <TouchableOpacity style={styles.blockButton} onPress={() => handleBlock(data.item.phone)}>
+        <Text style={styles.blockText}>Block</Text>
+      </TouchableOpacity>
+    </View>
   );
 
   return (
     <>
-      <CallLogsDetailModal visible={modalVisible} onClose={closeModal} title="CallLogs Detail Modal" />
-      <FlatList
+      {/* <CallLogsDetailModal visible={modalVisible} onClose={closeModal} title="CallLogs Detail Modal" /> */}
+      <SwipeListView
         data={contacts}
         renderItem={renderItem}
+        renderHiddenItem={renderHiddenItem}
         keyExtractor={(item) => item.id}
-        style={styles.list}/>
+        rightOpenValue={-75} // Width of the hidden block button
+        style={styles.list}
+      />
     </>
   );
 };
 
 const styles = StyleSheet.create({
   list: {
-    padding: 10,
+    // padding: 10,
   },
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    // borderBottomWidth: 1,
+    // borderBottomColor: '#ccc',
+    backgroundColor:'#ccc'
+  },
+  hiddenContainer: {
+    // backgroundColor: '#FF3B30',
+    flex: 1,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    paddingRight: 15,
+  },
+  blockButton: {
+    // backgroundColor: '#FF3B30',
+    // padding: 15,
+    borderRadius: 5,
+  },
+  blockText: {
+    color: '#000',
+    fontWeight: 'bold',
   },
   image: {
     width: 50,

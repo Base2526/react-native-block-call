@@ -3,24 +3,14 @@ import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity } from 'reac
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 interface FullscreenModalProps {
-  visible: boolean;
-  onClose: () => void;
-  title: string;
+  // visible: boolean;
+  // onClose: () => void;
+  title?: string;
 }
 
-const CallLogsDetailModal: React.FC<FullscreenModalProps> = ({ visible, onClose, title }) => {
+const CallLogsDetailScreen: React.FC<FullscreenModalProps> = ({ title }) => {
   return (
-    <Modal
-      animationType="slide"
-      transparent={false}
-      visible={visible}
-      onRequestClose={onClose} // For Android back button support
-    >
       <View style={styles.container}>
-        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Icon name="times" size={30} color="#000" />
-        </TouchableOpacity>
-
         <View style={styles.header}>
           <Text style={styles.headerText}>+61 450 228 714</Text>
           <Text style={styles.subHeaderText}>No results found</Text>
@@ -62,7 +52,6 @@ const CallLogsDetailModal: React.FC<FullscreenModalProps> = ({ visible, onClose,
           <Text style={styles.searchText}>Search more info for this number</Text>
         </TouchableOpacity>
       </View>
-    </Modal>
   );
 };
 
@@ -137,4 +126,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CallLogsDetailModal;
+export default CallLogsDetailScreen;

@@ -1,38 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, StyleSheet, NativeModules } from 'react-native';
-// Importing the Icon component
-import Icon from 'react-native-vector-icons/Ionicons';
+import { View, Text, TouchableOpacity, Image, StyleSheet, NativeModules, Alert} from 'react-native';
+import { SwipeListView } from 'react-native-swipe-list-view'; // Importing SwipeListView
+import Icon from 'react-native-vector-icons/Ionicons'; // Importing the Icon component
 import _ from "lodash"
+import * as utils from "../utils"
+import SMSDetailModal from "../modal/SMSDetailModal";
 
 const { DatabaseHelper } = NativeModules;
 
-// const generateContacts = (count: number) => {
-//   const contacts = [];
-//   for (let i = 1; i <= count; i++) {
-//     contacts.push({
-//       id: i.toString(),
-//       name: `Contact ${i}`,
-//       phone: `+1 ${Math.floor(Math.random() * 900 + 100)} ${Math.floor(Math.random() * 900 + 100)} ${Math.floor(Math.random() * 9000 + 1000)}`,
-//       time: `${Math.floor(Math.random() * 12 + 1)}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')} ${Math.random() < 0.5 ? 'AM' : 'PM'}`,
-//       image: 'https://via.placeholder.com/50', // Placeholder image URL
-//       note: `This is a note for ${i}`, // Example note for multiline text
-//       callCount: Math.floor(Math.random() * 10), // Random call count for each contact
-//     });
-//   }
-//   return contacts;
-// };
-// Sample data for the contact list
-// const smss = generateContacts(10);
-
-// Define the type for the contact item
-interface sms {
+// Define the interface for individual message structure
+interface Message {
+  body: string;
+  date: string; // Assuming date is stored as a string (timestamp)
   id: string;
   name: string;
-  phone: string;
-  time: string;
-  image: string;
-  note: string; // Added note for multiline text
-  callCount: number; // Added callCount
+  number: string;
+  photoUri: string | undefined; // photoUri can be a string or null
+  read: number; // 1 for read, 0 for unread
+  status: string; // Status as a string
+  thread_id: string;
+  type: string;
+}
+
+// Define the interface for the overall structure
+interface SmsLog {
+  address: string;
+  messages: Message[];
 }
 
 function getDate(format: string = 'MM/DD'): string {
@@ -51,72 +44,109 @@ function getDate(format: string = 'MM/DD'): string {
   }
 }
 
-const SMSScreen = () => {
+const findLastUpdatedSmsLog = (logs: SmsLog[]): SmsLog | undefined => {
+  return logs.reduce((latest, current) => {
+      return (latest === null || Number(current.date) > Number(latest.date)) ? current : latest;
+  }, null as SmsLog | null);
+};
+
+const SMSScreen: React.FC = ({navigation}) => {
   const [smss, setSmss] = useState([]);
+  const [smsDetailVisible, setSMSDetailVisible] = useState(false);
 
-  useEffect(()=>{
-    DatabaseHelper.fetchSmsLogs()
-    .then((response: any) => {
-        console.log("fetchSmsLogs response :", response)
+  useEffect(async()=>{
+    let smslogs = await utils.getObject('smslogs');
+    if(smslogs === null || _.isEmpty(smslogs)){
+      console.log("fetch data ...");
+      DatabaseHelper.fetchSmsLogs()
+      .then(async(response: any) => {
+          console.log("fetchSmsLogs response :", response)
 
-        const smss = [];
-        _.map(response, (item, i)=>{
-          // {"address": "0817316162", "body": "0817316162 พยายามติดต่อคุณเวลา21:09น.This number tried to contact you.", "date": "1538489392080"}
-          smss.push({
-            id: i.toString(),
-            name: item.name,
-            phone: item.number,
-            time: getDate(item.date),
-            image: item.photoUri, // Placeholder image URL
-            note: item.body, // Example note for multiline text
-            callCount: Math.floor(Math.random() * 10), // Random call count for each contact
-          });
-        })
-        setSmss(smss)
-    })
-    .catch((error: any) => console.log(error));
+          setSmss(response)
+          await utils.saveObject('smslogs', response);
+      })
+      .catch((error: any) => console.log(error));
+    }else{
+      setSmss(smslogs)
+    }
   }, [])
 
-  const renderItem = ({ item }: { item: Contact }) => (
-    <View style={styles.itemContainer}>
-      <Image source={{ uri: item.image }} style={styles.image} />
-      <View style={styles.detailsContainer}>
+  const closeSMSDetailModal = () => {
+    setSMSDetailVisible(false);
+  };
+
+  // Function to handle block action
+  const handleBlock = (phone: string) => {
+    Alert.alert(
+      "Block Contact",
+      `Are you sure you want to block ${phone}?`,
+      [
         {
-          item.name === 'Unknown' ? <></> : <Text style={styles.name}>{item.name}</Text>
-        }
-        
-        <Text style={styles.phone}>{item.phone}</Text>
-        <Text style={styles.note}>{item.note}</Text> 
-      </View>
-      <View style={styles.timeContainer}>
-        <Text style={styles.time}>{item.time}</Text>
-        <View style={styles.callCountContainer}>
-          <Text style={styles.callCount}>{item.callCount.toString()}</Text> 
-        </View>
-      </View>
+          text: "Cancel",
+          style: "cancel"
+        },
+        { text: "OK", onPress: () => console.log(`Blocked: ${phone}`) } // Implement your blocking logic here
+      ]
+    );
+  };
+
+  const renderItem = ({ item }: { item: SmsLog }) => {
+    const lastMessage: SmsLog | undefined = findLastUpdatedSmsLog(item.messages);
+    const callCount = _.filter(item.messages, item=>item.read === 0).length
+
+    return <TouchableOpacity style={styles.itemContainer} onPress={()=>{ 
+              navigation.navigate('SMSDetail', {thread_id: lastMessage.thread_id});
+            }}>
+            {/* <SMSDetailModal thread_id={lastMessage.thread_id} visible={smsDetailVisible} onClose={closeSMSDetailModal} title="SMS Detail" /> */}
+            <Image source={{ uri: lastMessage.photoUri }} style={styles.image} />
+            <View style={styles.detailsContainer}>
+              {
+                lastMessage.name === 'Unknown' ? <></> : <Text style={styles.name}>{lastMessage.name}</Text>
+              }
+              
+              <Text style={styles.phone}>{item.address}</Text>
+              <Text style={styles.note}>{lastMessage.body}</Text> 
+            </View>
+            <View style={styles.timeContainer}>
+              <Text style={styles.time}>{getDate(lastMessage.date)}</Text>
+                {
+                _.isEmpty(callCount) ? <></> : <View style={styles.callCountContainer}><Text style={styles.callCount}>{callCount.toString()}</Text> </View>
+                }
+            </View>
+          </TouchableOpacity>
+  };
+
+  const renderHiddenItem = (data: { item: SmsLog }) => (
+    <View style={styles.hiddenContainer}>
+      <TouchableOpacity style={styles.blockButton} onPress={() => handleBlock(data.item.phone)}>
+        <Text style={styles.blockText}>Block</Text>
+      </TouchableOpacity>
     </View>
   );
 
-  return (
-    <FlatList
-      data={smss}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.id}
-      style={styles.list}
-    />
-  );
+  return (<>
+            <SwipeListView
+              data={smss}
+              renderItem={renderItem}
+              renderHiddenItem={renderHiddenItem}
+              keyExtractor={(item) => item.address}
+              rightOpenValue={-75} // Width of the hidden block button
+              style={styles.list}
+              initialNumToRender={8}
+            />
+          </>);
 };
 
 const styles = StyleSheet.create({
   list: {
-    padding: 10,
+    // padding: 10,
   },
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start', // Align items to the start
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    // borderBottomWidth: 1,
+    backgroundColor: '#ccc',
   },
   image: {
     width: 50,
@@ -126,6 +156,22 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {
     flex: 1, // Allows the name and phone to take available space
+  },
+  hiddenContainer: {
+    // backgroundColor: '#FF3B30',
+    flex: 1,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    paddingRight: 15,
+  },
+  blockButton: {
+    // backgroundColor: '#FF3B30',
+    // padding: 15,
+    borderRadius: 5,
+  },
+  blockText: {
+    color: '#000',
+    fontWeight: 'bold',
   },
   name: {
     fontWeight: 'bold',

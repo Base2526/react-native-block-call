@@ -1,14 +1,32 @@
-import React from 'react';
-import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useEffect }from 'react';
+import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity, Dimensions, NativeModules } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-interface AboutModalProps {
+const { DatabaseHelper } = NativeModules;
+
+interface SMSDetailModalProps {
+  thread_id: string;
   visible: boolean;
   onClose: () => void;
   title: string;
 }
 
-const HelpSendFeedbackModal: React.FC<AboutModalProps> = ({ visible, onClose, title }) => {
+const SMSDetailModal: React.FC<SMSDetailModalProps> = ({ thread_id, visible, onClose, title }) => {
+
+  useEffect(()=>{
+    try {
+      DatabaseHelper.fetchSmsMessagesByThreadId(thread_id).then((response: any) => {
+        console.log("fetchSmsMessagesByThreadId response @1:", response)
+      })
+      .catch((error: any) =>{
+        console.log("fetchSmsMessagesByThreadId response @2:",error)
+      } );
+    } catch (error) {
+      console.error("Error fetching SMS messages: ", error);
+    }
+
+  }, [])
+
   return (
     <Modal
       animationType="slide"
@@ -21,7 +39,7 @@ const HelpSendFeedbackModal: React.FC<AboutModalProps> = ({ visible, onClose, ti
           <Icon name="times" size={25} color="#000" />
         </TouchableOpacity>
         <View style={styles.imageContainer}>
-          <Text style={styles.text}>Help & SendFeedbackModalModal</Text>
+          <Text style={styles.text}>SMSDetailModal</Text>
         </View>
       </View>
     </Modal>
@@ -69,4 +87,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HelpSendFeedbackModal;
+export default SMSDetailModal;
