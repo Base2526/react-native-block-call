@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, NativeModules, Alert} from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, NativeModules, Alert, RefreshControl, ScrollView } from 'react-native';
 import { SwipeListView } from 'react-native-swipe-list-view'; // Importing SwipeListView
 import Icon from 'react-native-vector-icons/Ionicons'; // Importing the Icon component
-import _ from "lodash"
-import * as utils from "../utils"
+import _ from "lodash";
+import * as utils from "../utils";
 import SMSDetailModal from "../modal/SMSDetailModal";
 
 const { DatabaseHelper } = NativeModules;
 
-// Define the interface for individual message structure
 interface Message {
   body: string;
   date: string; // Assuming date is stored as a string (timestamp)
@@ -22,7 +21,6 @@ interface Message {
   type: string;
 }
 
-// Define the interface for the overall structure
 interface SmsLog {
   address: string;
   messages: Message[];
@@ -50,32 +48,43 @@ const findLastUpdatedSmsLog = (logs: SmsLog[]): SmsLog | undefined => {
   }, null as SmsLog | null);
 };
 
-const SMSScreen: React.FC = ({navigation}) => {
-  const [smss, setSmss] = useState([]);
+const SMSScreen: React.FC = ({ navigation }) => {
+  const [smss, setSmss] = useState<SmsLog[]>([]);
   const [smsDetailVisible, setSMSDetailVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false); // State for pull-to-refresh
 
-  useEffect(async()=>{
-    let smslogs = await utils.getObject('smslogs');
-    if(smslogs === null || _.isEmpty(smslogs)){
-      console.log("fetch data ...");
-      DatabaseHelper.fetchSmsLogs()
-      .then(async(response: any) => {
-          console.log("fetchSmsLogs response :", response)
+  const fetchSmsLogs = async () => {
+    try {
+      let smslogs = await utils.getObject('smslogs');
+      if (smslogs === null || _.isEmpty(smslogs)) {
+        console.log("fetch data ...");
+        const response = await DatabaseHelper.fetchSmsLogs();
+        console.log("fetchSmsLogs response :", response);
 
-          setSmss(response)
-          await utils.saveObject('smslogs', response);
-      })
-      .catch((error: any) => console.log(error));
-    }else{
-      setSmss(smslogs)
+        setSmss(response);
+        await utils.saveObject('smslogs', response);
+      } else {
+        setSmss(smslogs);
+      }
+    } catch (error) {
+      console.log(error);
     }
-  }, [])
+  };
+
+  useEffect(() => {
+    fetchSmsLogs();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchSmsLogs();
+    setRefreshing(false);
+  };
 
   const closeSMSDetailModal = () => {
     setSMSDetailVisible(false);
   };
 
-  // Function to handle block action
   const handleBlock = (phone: string) => {
     Alert.alert(
       "Block Contact",
@@ -92,28 +101,28 @@ const SMSScreen: React.FC = ({navigation}) => {
 
   const renderItem = ({ item }: { item: SmsLog }) => {
     const lastMessage: SmsLog | undefined = findLastUpdatedSmsLog(item.messages);
-    const callCount = _.filter(item.messages, item=>item.read === 0).length
+    const callCount = _.filter(item.messages, item => item.read === 0).length;
 
-    return <TouchableOpacity style={styles.itemContainer} onPress={()=>{ 
-              navigation.navigate('SMSDetail', {thread_id: lastMessage.thread_id});
-            }}>
-            {/* <SMSDetailModal thread_id={lastMessage.thread_id} visible={smsDetailVisible} onClose={closeSMSDetailModal} title="SMS Detail" /> */}
-            <Image source={{ uri: lastMessage.photoUri }} style={styles.image} />
-            <View style={styles.detailsContainer}>
-              {
-                lastMessage.name === 'Unknown' ? <></> : <Text style={styles.name}>{lastMessage.name}</Text>
-              }
-              
-              <Text style={styles.phone}>{item.address}</Text>
-              <Text style={styles.note}>{lastMessage.body}</Text> 
-            </View>
-            <View style={styles.timeContainer}>
-              <Text style={styles.time}>{getDate(lastMessage.date)}</Text>
-                {
-                _.isEmpty(callCount) ? <></> : <View style={styles.callCountContainer}><Text style={styles.callCount}>{callCount.toString()}</Text> </View>
-                }
-            </View>
-          </TouchableOpacity>
+    return (
+      <TouchableOpacity
+        style={styles.itemContainer}
+        onPress={() => {
+          navigation.navigate('SMSDetail', { thread_id: lastMessage.thread_id });
+        }}
+      >
+        {/* <SMSDetailModal thread_id={lastMessage.thread_id} visible={smsDetailVisible} onClose={closeSMSDetailModal} title="SMS Detail" /> */}
+        <Image source={{ uri: lastMessage.photoUri }} style={styles.image} />
+        <View style={styles.detailsContainer}>
+          {lastMessage.name === 'Unknown' ? <></> : <Text style={styles.name}>{lastMessage.name}</Text>}
+          <Text style={styles.phone}>{item.address}</Text>
+          <Text style={styles.note}>{lastMessage.body}</Text>
+        </View>
+        <View style={styles.timeContainer}>
+          <Text style={styles.time}>{getDate(lastMessage.date)}</Text>
+          {_.isEmpty(callCount) ? <></> : <View style={styles.callCountContainer}><Text style={styles.callCount}>{callCount.toString()}</Text></View>}
+        </View>
+      </TouchableOpacity>
+    );
   };
 
   const renderHiddenItem = (data: { item: SmsLog }) => (
@@ -124,17 +133,23 @@ const SMSScreen: React.FC = ({navigation}) => {
     </View>
   );
 
-  return (<>
-            <SwipeListView
-              data={smss}
-              renderItem={renderItem}
-              renderHiddenItem={renderHiddenItem}
-              keyExtractor={(item) => item.address}
-              rightOpenValue={-75} // Width of the hidden block button
-              style={styles.list}
-              initialNumToRender={8}
-            />
-          </>);
+  return (
+    <SwipeListView
+      data={smss}
+      renderItem={renderItem}
+      renderHiddenItem={renderHiddenItem}
+      keyExtractor={(item) => item.address}
+      rightOpenValue={-75} // Width of the hidden block button
+      style={styles.list}
+      initialNumToRender={8}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      }
+    />
+  );
 };
 
 const styles = StyleSheet.create({

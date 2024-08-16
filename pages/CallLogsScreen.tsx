@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { NativeModules, View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { NativeModules, View, Text, StyleSheet, TouchableOpacity, Alert, Image, RefreshControl } from 'react-native';
 import { SwipeListView } from 'react-native-swipe-list-view'; // Importing SwipeListView
 import Icon from 'react-native-vector-icons/Ionicons'; // Importing the Icon component
 import _ from "lodash";
@@ -9,7 +9,6 @@ import * as utils from "../utils"
 
 const { DatabaseHelper } = NativeModules;
 
-// Define the type for the contact item
 interface Contact {
   id: string;
   name: string;
@@ -34,45 +33,46 @@ function getDate(format: string = 'MM/DD'): string {
   }
 }
 
-const CallLogsScreen: React.FC = ({ navigation }) => {
+const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(async() => {
+  const fetchContacts = async () => {
     let calllogs = await utils.getObject('calllogs');
 
-    // console.log("calllogs :", calllogs);
-    if(calllogs === null){
+    if (calllogs === null) {
       DatabaseHelper.fetchCallLogs()
-      .then(async(response: any) => {
-        const contacts = [];
-        _.map(response, (item, i) => {
-          contacts.push({
-            id: i.toString(),
-            name: item.name,
-            phone: item.number,
-            time: getDate(item.date),
-            image: item.photoUri,
+        .then(async (response: any) => {
+          const contacts = [];
+          _.map(response, (item, i) => {
+            contacts.push({
+              id: i.toString(),
+              name: item.name,
+              phone: item.number,
+              time: getDate(item.date),
+              image: item.photoUri,
+            });
           });
-        });
-        setContacts(contacts);
-        await utils.saveObject('calllogs', contacts);
-      })
-      .catch((error: any) => console.log(error));
-    }else{
+          setContacts(contacts);
+          await utils.saveObject('calllogs', contacts);
+        })
+        .catch((error: any) => console.log(error));
+    } else {
       setContacts(calllogs);
     }
+  };
+
+  useEffect(() => {
+    fetchContacts();
   }, []);
 
-  // const openModal = () => {
-  //   setModalVisible(true);
-  // };
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchContacts();
+    setRefreshing(false);
+  }, []);
 
-  // const closeModal = () => {
-  //   setModalVisible(false);
-  // };
-
-  // Function to handle block action
   const handleBlock = (phone: string) => {
     Alert.alert(
       "Block Contact",
@@ -110,17 +110,20 @@ const CallLogsScreen: React.FC = ({ navigation }) => {
   );
 
   return (
-    <>
-      {/* <CallLogsDetailModal visible={modalVisible} onClose={closeModal} title="CallLogs Detail Modal" /> */}
-      <SwipeListView
-        data={contacts}
-        renderItem={renderItem}
-        renderHiddenItem={renderHiddenItem}
-        keyExtractor={(item) => item.id}
-        rightOpenValue={-75} // Width of the hidden block button
-        style={styles.list}
-      />
-    </>
+    <SwipeListView
+      data={contacts}
+      renderItem={renderItem}
+      renderHiddenItem={renderHiddenItem}
+      keyExtractor={(item) => item.id}
+      rightOpenValue={-75} // Width of the hidden block button
+      style={styles.list}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      }
+    />
   );
 };
 
@@ -132,20 +135,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    // borderBottomWidth: 1,
-    // borderBottomColor: '#ccc',
     backgroundColor:'#ccc'
   },
   hiddenContainer: {
-    // backgroundColor: '#FF3B30',
     flex: 1,
     alignItems: 'flex-end',
     justifyContent: 'center',
     paddingRight: 15,
   },
   blockButton: {
-    // backgroundColor: '#FF3B30',
-    // padding: 15,
     borderRadius: 5,
   },
   blockText: {
