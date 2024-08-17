@@ -101,14 +101,14 @@
         -->
 
         <!-- SMS and MMS Receivers -->
-<!--        <receiver-->
-<!--            android:name=".receiver.SmsReceiver"-->
-<!--            android:permission="android.permission.BROADCAST_SMS"-->
-<!--            android:exported="true">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.provider.Telephony.SMS_DELIVER" />-->
-<!--            </intent-filter>-->
-<!--        </receiver>-->
+        <receiver
+            android:name=".receiver.SmsReceiver"
+            android:permission="android.permission.BROADCAST_SMS"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_DELIVER" />
+            </intent-filter>
+        </receiver>
 
         <receiver
             android:name=".receiver.MMSReceiver"
@@ -138,7 +138,6 @@
         <!-- Receiver for Call State -->
         <receiver
             android:name=".receiver.PhoneCallReceiver"
-            android:permission="android.permission.BROADCAST_SMS"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

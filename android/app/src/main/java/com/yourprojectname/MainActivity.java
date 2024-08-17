@@ -79,11 +79,14 @@ public class MainActivity extends ReactActivity {
 //    setContentView(R.layout.activity_main);
 
     requestPermissions();
-
-    if (!Telephony.Sms.getDefaultSmsPackage(getApplicationContext()).equals(getApplicationContext().getPackageName())) {
-      Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
-      intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getApplicationContext().getPackageName());
-      startActivity(intent);
+    try{
+      if (!Telephony.Sms.getDefaultSmsPackage(getApplicationContext()).equals(getApplicationContext().getPackageName())) {
+        Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+        intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getApplicationContext().getPackageName());
+        startActivity(intent);
+      }
+    }catch (Exception ex){
+      Log.e("MAINActivity", ex.toString());
     }
   }
 
