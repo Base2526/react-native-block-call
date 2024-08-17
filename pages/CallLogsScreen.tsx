@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { NativeModules, View, Text, StyleSheet, TouchableOpacity, Alert, Image, RefreshControl } from 'react-native';
+import { NativeModules, View, Text, StyleSheet, TouchableOpacity, Alert, Image, RefreshControl, ActivityIndicator } from 'react-native';
 import { SwipeListView } from 'react-native-swipe-list-view'; // Importing SwipeListView
 import Icon from 'react-native-vector-icons/Ionicons'; // Importing the Icon component
 import _ from "lodash";
 
-import CallLogsDetailModal from '../modal/CallLogsDetailModal';
 import * as utils from "../utils"
 
 const { DatabaseHelper } = NativeModules;
@@ -17,31 +16,16 @@ interface Contact {
   image: string;
 }
 
-function getDate(format: string = 'MM/DD'): string {
-  const today = new Date();
-  const month = (today.getMonth() + 1).toString().padStart(2, '0'); // Add leading zero
-  const year = today.getFullYear();
-  const date = today.getDate().toString().padStart(2, '0'); // Add leading zero
-
-  switch (format) {
-    case 'DD/MM':
-      return `${date}/${month}`;
-    case 'YYYY-MM-DD':
-      return `${year}-${month}-${date}`;
-    default: // 'MM/DD'
-      return `${month}/${date}`;
-  }
-}
 
 const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchContacts = async () => {
-    let calllogs = await utils.getObject('calllogs');
+    // let calllogs = await utils.getObject('calllogs');
 
-    if (calllogs === null) {
+    // if (calllogs === null) {
       DatabaseHelper.fetchCallLogs()
         .then(async (response: any) => {
           const contacts = [];
@@ -50,17 +34,22 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
               id: i.toString(),
               name: item.name,
               phone: item.number,
-              time: getDate(item.date),
+              time: utils.getDate(item.date),
               image: item.photoUri,
             });
           });
           setContacts(contacts);
-          await utils.saveObject('calllogs', contacts);
+          // await utils.saveObject('calllogs', contacts);
+
+          setLoading(false)
         })
-        .catch((error: any) => console.log(error));
-    } else {
-      setContacts(calllogs);
-    }
+        .catch((error: any) =>{
+          setLoading(false);
+          console.log(error);
+        })
+    // } else {
+    //   setContacts(calllogs);
+    // }
   };
 
   useEffect(() => {
@@ -82,7 +71,13 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           text: "Cancel",
           style: "cancel"
         },
-        { text: "OK", onPress: () => console.log(`Blocked: ${phone}`) } // Implement your blocking logic here
+        { text: "OK", onPress: () => {
+          DatabaseHelper.addData({ phoneNumber: phone, detail: "xxxx", reporter: "a1" })
+          .then(async (response: any) => {
+            console.log("response :", response)
+          })
+          .catch((error: any) => console.log(error));
+        }} // Implement your blocking logic here
       ]
     );
   };
@@ -109,6 +104,10 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     </View>
   );
 
+  if(loading){
+    return <ActivityIndicator color={"#fff"}  size={'large'}/>
+  }
+
   return (
     <SwipeListView
       data={contacts}
@@ -116,7 +115,6 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       renderHiddenItem={renderHiddenItem}
       keyExtractor={(item) => item.id}
       rightOpenValue={-75} // Width of the hidden block button
-      style={styles.list}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -128,9 +126,6 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  list: {
-    // padding: 10,
-  },
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',

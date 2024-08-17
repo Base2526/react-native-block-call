@@ -4,13 +4,16 @@ import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.ReactRootView;
 import android.Manifest;
+import android.app.role.RoleManager;
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.CallLog;
+import android.provider.Telephony;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -28,6 +31,8 @@ public class MainActivity extends ReactActivity {
 
   private static final int PERMISSIONS_REQUEST_CODE = 100;
 
+  private static final String ROLE= RoleManager.ROLE_SMS;
+  private static final int REQUEST_CODE_SET_DEFAULT_SMS=1001;
   /**
    * Returns the name of the main component registered from JavaScript. This is used to schedule
    * rendering of the component.
@@ -73,8 +78,44 @@ public class MainActivity extends ReactActivity {
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.activity_main);
 
-      requestPermissions();
+    requestPermissions();
+
+    if (!Telephony.Sms.getDefaultSmsPackage(getApplicationContext()).equals(getApplicationContext().getPackageName())) {
+      Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+      intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getApplicationContext().getPackageName());
+      startActivity(intent);
+    }
   }
+
+//  private void askDefaultSmsHandlerPermission() {
+//    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+//      // Use RoleManager as shown above
+//    } else {
+//      // For Android 9 and belowIntentintent=newIntent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+//      intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
+//      startActivityForResult(intent, REQUEST_CODE_SET_DEFAULT_SMS);
+//    }
+//  }
+
+//  private void askDefaultSmsHandlerPermission() {
+//    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+//      RoleManagerroleManager= getSystemService(RoleManager.class);
+//      if (roleManager != null && roleManager.isRoleAvailable(ROLE)) {
+//        if (!roleManager.isRoleHeld(ROLE)) {
+//          IntentroleRequestIntent= roleManager.createRequestRoleIntent(ROLE);
+//          startActivityForResult(roleRequestIntent, REQUEST_CODE_SET_DEFAULT_SMS);
+//        } else {
+//          showToast("App is already the default SMS handler.");
+//        }
+//      } else {
+//        showToast("RoleManager is unavailable or role is not available.");
+//      }
+//    } else {
+//      // For Android versions below 10Intentintent=newIntent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+//      intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
+//      startActivityForResult(intent, REQUEST_CODE_SET_DEFAULT_SMS);
+//    }
+//  }
 
   private void requestPermissions() {
     String[] permissions = {
@@ -126,8 +167,8 @@ public class MainActivity extends ReactActivity {
 
   private void onPermissionsGranted() {
     // Your logic here, e.g., accessing contacts, starting the camera, or accessing location
-//    readOldSms();
-    fetchOldCallLogs();
+    //    readOldSms();
+    //    fetchOldCallLogs();
     Toast.makeText(this, "All permissions granted!", Toast.LENGTH_SHORT).show();
   }
 
