@@ -42,6 +42,15 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
         return "DatabaseHelper";
     }
 
+    private WritableMap createResponse(Boolean status, double executionTime, WritableArray data, String message) {
+        WritableMap response = Arguments.createMap();
+        response.putBoolean("status", status);
+        response.putDouble("executionTime", executionTime  / (1000 * 60) ); // convert to minute
+        response.putArray("data", data);
+        response.putString("message", message);
+        return response;
+    }
+
     @ReactMethod
     public void addData(ReadableMap itemMap, Promise promise) {
         String phoneNumber = itemMap.getString("phoneNumber");
@@ -94,8 +103,18 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void getAllData(Promise promise) {
-        WritableArray cursor = databaseHelper.getAllData();
-        promise.resolve(cursor);
+        long startTime = System.currentTimeMillis();
+        try {
+            WritableArray cursor = databaseHelper.getAllData();
+//            promise.resolve(cursor);
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.resolve(createResponse(true, executionTime, cursor, ""));
+        } catch (Exception e) {
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.reject("LOGS_ERROR", createResponse(false, executionTime, null, e.getMessage()));
+        }
     }
 
     @ReactMethod
@@ -112,94 +131,118 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void fetchCallLogs(Promise promise){
-        Uri callLogUri = Uri.parse("content://call_log/calls");
-        ContentResolver contentResolver = getReactApplicationContext().getContentResolver();
-        Cursor cursor = contentResolver.query(callLogUri, null, null, null, null);
-        if (cursor != null) {
-            WritableArray callList = Arguments.createArray();
-            while (cursor.moveToNext()) {
-                String number = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.NUMBER));
-                String type = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE));
-                String date = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.DATE));
+        long startTime = System.currentTimeMillis();
+        try {
+            Uri callLogUri = Uri.parse("content://call_log/calls");
+            ContentResolver contentResolver = getReactApplicationContext().getContentResolver();
+            Cursor cursor = contentResolver.query(callLogUri, null, null, null, null);
+            if (cursor != null) {
+                WritableArray callList = Arguments.createArray();
+                while (cursor.moveToNext()) {
+                    String id = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls._ID));
+                    String number = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.NUMBER));
+                    String type = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE));
+                    String date = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.DATE));
 
-                // Fetch contact name associated with the number
-                ContactInfo contactInfo = Utils.getContactInfo(getReactApplicationContext(), number);
+                    // Fetch contact name associated with the number
+                    ContactInfo contactInfo = Utils.getContactInfo(getReactApplicationContext(), number);
 
-                // Process the call log data here
-                Log.d("OldCallLog", "Number: " + number + ", Type: " + type + ", Date: " + date);
+                    // Process the call log data here
+                    Log.d("OldCallLog", "Number: " + number + ", Type: " + type + ", Date: " + date);
 
-                // Create a WritableMap for each CallItem
-                WritableMap callItem = Arguments.createMap();
-                callItem.putString("name", contactInfo.name); // Add the contact name to the call item
-                callItem.putString("photoUri", contactInfo.photoUri); // Add the contact photo URI
-                callItem.putString("number", number);
-                callItem.putString("type", type);
-                callItem.putString("date", date);
+                    // Create a WritableMap for each CallItem
+                    WritableMap callItem = Arguments.createMap();
+                    callItem.putString("id", id);
+                    callItem.putString("name", contactInfo.name); // Add the contact name to the call item
+                    callItem.putString("photoUri", contactInfo.photoUri); // Add the contact photo URI
+                    callItem.putString("number", number);
+                    callItem.putString("type", type);
+                    callItem.putString("date", date);
 
-                // Add the WritableMap to the WritableArray
-                callList.pushMap(callItem);
+
+                    // Add the WritableMap to the WritableArray
+                    callList.pushMap(callItem);
+                }
+                cursor.close();
+
+                long endTime = System.currentTimeMillis();
+                long executionTime = endTime - startTime;
+                promise.resolve(createResponse(true, executionTime, callList, ""));
             }
-            cursor.close();
-            promise.resolve(callList);
+        } catch (Exception e) {
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.reject("LOGS_ERROR", createResponse(false, executionTime, null, e.getMessage()));
         }
-        promise.resolve(null);
     }
 
     @ReactMethod
     public void fetchSmsLogs(Promise promise) {
-        Uri smsUri = Uri.parse("content://sms/");
-        Cursor cursor = getReactApplicationContext().getContentResolver().query(smsUri, null, null, null, null);
+        long startTime = System.currentTimeMillis();
+        try {
+            Uri smsUri = Uri.parse("content://sms/");
+            Cursor cursor = getReactApplicationContext().getContentResolver().query(smsUri, null, null, null, null);
 
-        if (cursor != null) {
-            // A map to hold SMS grouped by address
-            HashMap<String, WritableArray> smsMap = new HashMap<>();
+            if (cursor != null) {
+                // A map to hold SMS grouped by address
+                HashMap<String, WritableArray> smsMap = new HashMap<>();
 
-            while (cursor.moveToNext()) {
-                String id = cursor.getString(cursor.getColumnIndexOrThrow("_id"));
-                String address = cursor.getString(cursor.getColumnIndexOrThrow("address"));
-                String body = cursor.getString(cursor.getColumnIndexOrThrow("body"));
-                String date = cursor.getString(cursor.getColumnIndexOrThrow("date"));
-                String type = cursor.getString(cursor.getColumnIndexOrThrow("type"));
-                int read = cursor.getInt(cursor.getColumnIndexOrThrow("read"));
-                String status = cursor.getString(cursor.getColumnIndexOrThrow("status"));
-                String thread_id = cursor.getString(cursor.getColumnIndexOrThrow("thread_id"));
+                while (cursor.moveToNext()) {
+                    String id = cursor.getString(cursor.getColumnIndexOrThrow("_id"));
+                    String address = cursor.getString(cursor.getColumnIndexOrThrow("address"));
+                    String body = cursor.getString(cursor.getColumnIndexOrThrow("body"));
+                    String date = cursor.getString(cursor.getColumnIndexOrThrow("date"));
+                    String type = cursor.getString(cursor.getColumnIndexOrThrow("type"));
+                    int read = cursor.getInt(cursor.getColumnIndexOrThrow("read"));
+                    String status = cursor.getString(cursor.getColumnIndexOrThrow("status"));
+                    String thread_id = cursor.getString(cursor.getColumnIndexOrThrow("thread_id"));
 
-                // Fetch contact name associated with the number
-                ContactInfo contactInfo =  Utils.getContactInfo(getReactApplicationContext(), address);
+                    // Fetch contact name associated with the number
+                    ContactInfo contactInfo =  Utils.getContactInfo(getReactApplicationContext(), address);
 
-                // Create a WritableMap for each smsItem
-                WritableMap smsItem = Arguments.createMap();
-                smsItem.putString("id", id);
-                smsItem.putString("number", address);
-                smsItem.putString("body", body);
-                smsItem.putString("date", date);
-                smsItem.putString("name", contactInfo.name); // Add contact name
-                smsItem.putString("photoUri", contactInfo.photoUri); // Add contact photo URI
-                smsItem.putString("type", type);
-                smsItem.putInt("read", read);
-                smsItem.putString("status", status);
-                smsItem.putString("thread_id", thread_id);
+                    // Create a WritableMap for each smsItem
+                    WritableMap smsItem = Arguments.createMap();
+                    smsItem.putString("id", id);
+                    smsItem.putString("number", address);
+                    smsItem.putString("body", body);
+                    smsItem.putString("date", date);
+                    smsItem.putString("name", contactInfo.name); // Add contact name
+                    smsItem.putString("photoUri", contactInfo.photoUri); // Add contact photo URI
+                    smsItem.putString("type", type);
+                    smsItem.putInt("read", read);
+                    smsItem.putString("status", status);
+                    smsItem.putString("thread_id", thread_id);
 
-                // Add the smsItem to the corresponding WritableArray in the map
-                if (!smsMap.containsKey(address)) {
-                    smsMap.put(address, Arguments.createArray());
+                    // Add the smsItem to the corresponding WritableArray in the map
+                    if (!smsMap.containsKey(address)) {
+                        smsMap.put(address, Arguments.createArray());
+                    }
+                    smsMap.get(address).pushMap(smsItem);
                 }
-                smsMap.get(address).pushMap(smsItem);
-            }
-            cursor.close();
+                cursor.close();
 
-            // Convert the map to a WritableArray for the response
-            WritableArray groupedSmsList = Arguments.createArray();
-            for (Map.Entry<String, WritableArray> entry : smsMap.entrySet()) {
-                WritableMap groupedSms = Arguments.createMap();
-                groupedSms.putString("address", entry.getKey());
-                groupedSms.putArray("messages", entry.getValue());
-                groupedSmsList.pushMap(groupedSms);
-            }
+                // Convert the map to a WritableArray for the response
+                WritableArray groupedSmsList = Arguments.createArray();
+                for (Map.Entry<String, WritableArray> entry : smsMap.entrySet()) {
+                    WritableMap groupedSms = Arguments.createMap();
+                    groupedSms.putString("address", entry.getKey());
+                    groupedSms.putArray("messages", entry.getValue());
+                    groupedSmsList.pushMap(groupedSms);
+                }
 
-            promise.resolve(groupedSmsList);
-        } else {
-            promise.reject("Error", "Failed to retrieve SMS logs.");
+                long endTime = System.currentTimeMillis();
+                long executionTime = endTime - startTime;
+                promise.resolve(createResponse(true, executionTime, groupedSmsList, ""));
+            } else {
+                long endTime = System.currentTimeMillis();
+                long executionTime = endTime - startTime;
+
+                promise.reject("LOGS_ERROR", createResponse(false, executionTime, null, "Failed to retrieve SMS logs."));
+            }
+        } catch (Exception e) {
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.reject("LOGS_ERROR", createResponse(false, executionTime, null, e.getMessage()));
         }
     }
 

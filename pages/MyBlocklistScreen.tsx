@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, NativeModules, Alert, RefreshControl } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, NativeModules, Alert, RefreshControl, FlatList } from 'react-native';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import Icon from 'react-native-vector-icons/Ionicons';
 import _ from "lodash"
@@ -88,16 +88,21 @@ const MyBlocklistScreen = () => {
   );
 
   return (
-    <SwipeListView
+    // <SwipeListView
+    //   data={blocks}
+    //   renderItem={renderItem}
+    //   renderHiddenItem={renderHiddenItem}
+    //   keyExtractor={(item) => item.ID}
+    //   rightOpenValue={-75}
+    //   refreshControl={
+    //     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+    //   }
+    // />
+    <FlatList
       data={blocks}
       renderItem={renderItem}
-      renderHiddenItem={renderHiddenItem}
       keyExtractor={(item) => item.ID}
-      rightOpenValue={-75}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    />
+      refreshControl={ <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> }/>
   );
 };
 

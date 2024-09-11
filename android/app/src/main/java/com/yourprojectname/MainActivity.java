@@ -28,11 +28,9 @@ import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends ReactActivity {
-
+  private static String TAG = MainActivity.class.getName();
   private static final int PERMISSIONS_REQUEST_CODE = 100;
 
-  private static final String ROLE= RoleManager.ROLE_SMS;
-  private static final int REQUEST_CODE_SET_DEFAULT_SMS=1001;
   /**
    * Returns the name of the main component registered from JavaScript. This is used to schedule
    * rendering of the component.
@@ -86,39 +84,9 @@ public class MainActivity extends ReactActivity {
         startActivity(intent);
       }
     }catch (Exception ex){
-      Log.e("MAINActivity", ex.toString());
+      Log.e(TAG, ex.toString());
     }
   }
-
-//  private void askDefaultSmsHandlerPermission() {
-//    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-//      // Use RoleManager as shown above
-//    } else {
-//      // For Android 9 and belowIntentintent=newIntent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
-//      intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
-//      startActivityForResult(intent, REQUEST_CODE_SET_DEFAULT_SMS);
-//    }
-//  }
-
-//  private void askDefaultSmsHandlerPermission() {
-//    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-//      RoleManagerroleManager= getSystemService(RoleManager.class);
-//      if (roleManager != null && roleManager.isRoleAvailable(ROLE)) {
-//        if (!roleManager.isRoleHeld(ROLE)) {
-//          IntentroleRequestIntent= roleManager.createRequestRoleIntent(ROLE);
-//          startActivityForResult(roleRequestIntent, REQUEST_CODE_SET_DEFAULT_SMS);
-//        } else {
-//          showToast("App is already the default SMS handler.");
-//        }
-//      } else {
-//        showToast("RoleManager is unavailable or role is not available.");
-//      }
-//    } else {
-//      // For Android versions below 10Intentintent=newIntent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
-//      intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
-//      startActivityForResult(intent, REQUEST_CODE_SET_DEFAULT_SMS);
-//    }
-//  }
 
   private void requestPermissions() {
     String[] permissions = {

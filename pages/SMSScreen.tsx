@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, NativeModules, Alert, RefreshControl, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, NativeModules, Alert, RefreshControl, FlatList } from 'react-native';
 import { SwipeListView } from 'react-native-swipe-list-view'; // Importing SwipeListView
 import Icon from 'react-native-vector-icons/Ionicons'; // Importing the Icon component
 import _ from "lodash";
@@ -56,16 +56,19 @@ const SMSScreen: React.FC = ({ navigation }) => {
   const fetchSmsLogs = async () => {
     try {
       let smslogs = await utils.getObject('smslogs');
-      if (smslogs === null || _.isEmpty(smslogs)) {
-        console.log("fetch data ...");
-        const response = await DatabaseHelper.fetchSmsLogs();
-        console.log("fetchSmsLogs response :", response);
 
-        setSmss(response);
-        await utils.saveObject('smslogs', response);
-      } else {
-        setSmss(smslogs);
-      }
+      console.log("SMSScreen :", smslogs)
+
+      // if (smslogs === null || _.isEmpty(smslogs)) {
+      //   console.log("fetch data ...");
+      //   const response = await DatabaseHelper.fetchSmsLogs();
+      //   console.log("fetchSmsLogs response :", response);
+
+      //   setSmss(response);
+      //   await utils.saveObject('smslogs', response);
+      // } else {
+      //   setSmss(smslogs);
+      // }
     } catch (error) {
       console.log(error);
     }
@@ -134,21 +137,27 @@ const SMSScreen: React.FC = ({ navigation }) => {
   );
 
   return (
-    <SwipeListView
+    // <SwipeListView
+    //   data={smss}
+    //   renderItem={renderItem}
+    //   renderHiddenItem={renderHiddenItem}
+    //   keyExtractor={(item) => item.address}
+    //   rightOpenValue={-75} // Width of the hidden block button
+    //   style={styles.list}
+    //   initialNumToRender={8}
+    //   refreshControl={
+    //     <RefreshControl
+    //       refreshing={refreshing}
+    //       onRefresh={onRefresh}
+    //     />
+    //   }
+    // />
+
+    <FlatList
       data={smss}
       renderItem={renderItem}
-      renderHiddenItem={renderHiddenItem}
       keyExtractor={(item) => item.address}
-      rightOpenValue={-75} // Width of the hidden block button
-      style={styles.list}
-      initialNumToRender={8}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-        />
-      }
-    />
+      refreshControl={ <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> }/>
   );
 };
 

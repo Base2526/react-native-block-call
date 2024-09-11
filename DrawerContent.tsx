@@ -1,5 +1,9 @@
 import { View, TouchableOpacity, Text, StyleSheet, Image } from 'react-native';
+
+import { NavigationProp } from '@react-navigation/core'; 
 import Icon from 'react-native-vector-icons/FontAwesome';
+
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 interface MenuProps {
   isOpen: boolean;
@@ -19,9 +23,9 @@ const DrawerContent: React.FC<MenuProps> = ({ isOpen, onClose, navigation }) => 
   return (
     <View style={styles.drawerContent}>
       <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-        <Text style={styles.closeButtonText}>Close</Text>
+        {/* <Text style={styles.closeButtonText}>Close</Text> */}
+        <FontAwesome name="xmark" size={50} color="#900" />
       </TouchableOpacity>
-      {/* Profile Section */}
       <TouchableOpacity
         style={styles.drawerItem}
         onPress={() => {
@@ -66,9 +70,6 @@ const DrawerContent: React.FC<MenuProps> = ({ isOpen, onClose, navigation }) => 
       <TouchableOpacity 
         style={styles.drawerItem}
         onPress={()=>{
-          // navigation.closeDrawer()
-          // openAboutModal()
-
           navigation.navigate('About');
           onClose();
         }}>
@@ -77,7 +78,6 @@ const DrawerContent: React.FC<MenuProps> = ({ isOpen, onClose, navigation }) => 
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   screen: {
@@ -166,6 +166,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 });
-
 
 export default DrawerContent;

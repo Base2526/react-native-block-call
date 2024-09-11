@@ -1,10 +1,20 @@
 import React, { useState, useLayoutEffect, useEffect } from 'react';
-import { SafeAreaView, Button, StyleSheet, View, TouchableOpacity, Text, Image } from 'react-native';
-import { NavigationContainer, getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import {  SafeAreaView,
+          Button, StyleSheet, View, 
+          TouchableOpacity, Text, 
+          Image, Modal, ActivityIndicator, 
+          NativeModules } from 'react-native';
+import { NavigationContainer, getFocusedRouteNameFromRoute, useNavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { Provider } from 'react-native-paper';
+import { Provider } from 'react-redux';
+import { Provider as ProviderPaper } from 'react-native-paper';
+
+
+import { RouteProp } from '@react-navigation/native';
+import { NavigationProp } from '@react-navigation/core'; // or wherever `NavigationProp` is from
+import { useSelector, useDispatch } from 'react-redux';
 
 import LoginScreen from './pages/LoginScreen';
 import CallLogsScreen from './pages/CallLogsScreen';
@@ -18,92 +28,22 @@ import SearchScreen from "./pages/SearchScreen";
 import SettingsScreen from "./pages/SettingsScreen";
 import ProfileScreen from "./pages/ProfileScreen";
 import TabIconWithMenu from "./TabIconWithMenu";
-
 import DrawerContent from "./DrawerContent";
-
 import * as utils from "./utils"
+import { store } from './redux/store';
+import { RootState, AppDispatch } from './redux/store';
+import LoadingDialog from './LoadingDialog';
 
-// interface MenuProps {
-//   isOpen: boolean;
-//   onClose: () => void;
-//   navigation: NavigationProp<any>;
-// }
-
-// const Menu: React.FC<MenuProps> = ({ isOpen, onClose, navigation }) => {
-//   if (!isOpen) return null;
-
-//   const userProfile = {
-//     name: 'John Doe',
-//     email: 'john.doe@example.com',
-//     image: '', // Replace with actual image URL
-//   };
-
-//   return (
-//     <View style={styles.drawerContent}>
-//       <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-//         <Text style={styles.closeButtonText}>Close</Text>
-//       </TouchableOpacity>
-//       {/* Profile Section */}
-//       <TouchableOpacity
-//         style={styles.drawerItem}
-//         onPress={() => {
-//           onClose();
-//           navigation.navigate("Profile");
-//         }}>
-//         <View style={styles.profileSection}>
-//           <Image source={{ uri: userProfile.image }} style={styles.profileImage} />
-//           <View style={styles.profileInfo}>
-//             <Text style={styles.profileName}>{userProfile.name}</Text>
-//             <Text style={styles.profileEmail}>{userProfile.email}</Text>
-//           </View>
-//         </View>
-//       </TouchableOpacity>
-
-//       <TouchableOpacity
-//         style={styles.drawerItem}
-//         onPress={() => navigation.navigate('Home')}>
-//         <Icon name="home" size={20} />
-//         <Text style={styles.drawerItemText}>Home</Text>
-//       </TouchableOpacity>
-//       <TouchableOpacity
-//         style={styles.drawerItem}
-//         onPress={() =>{ 
-//           navigation.navigate('Settings');
-//           onClose();
-//         }}>
-//         <Icon name="cogs" size={20} />
-//         <Text style={styles.drawerItemText}>Settings</Text>
-//       </TouchableOpacity>
-//       <TouchableOpacity 
-//         style={styles.drawerItem}
-//         onPress={() =>{
-//           // navigation.closeDrawer()
-//           // openHelpSendFeedbackModal();
-
-//           navigation.navigate('HelpSendFeedback');
-//           onClose();
-//         }}>
-//         <Text style={styles.drawerItemText}>Help & Send Feedback</Text>
-//       </TouchableOpacity>
-//       <TouchableOpacity 
-//         style={styles.drawerItem}
-//         onPress={()=>{
-//           // navigation.closeDrawer()
-//           // openAboutModal()
-
-//           navigation.navigate('About');
-//           onClose();
-//         }}>
-//         <Text style={styles.drawerItemText}>About</Text>
-//       </TouchableOpacity>
-//     </View>
-//   );
-// };
+// import { addMultipleCallLogs } from './redux/slices/calllogSlice'
 
 const Tab = createBottomTabNavigator();
 const CallLogsStack = createStackNavigator();
 const SMSStack = createStackNavigator();
 const MyBlocklistStack = createStackNavigator();
+
+const { DatabaseHelper } = NativeModules;
+
+const dispatch: AppDispatch = useDispatch();
 
 type CallLogsStackScreenProps = {
   navigation: NavigationProp<any>;
@@ -139,7 +79,7 @@ const CallLogsStackScreen: React.FC<CallLogsStackScreenProps> = ({ navigation, r
     }
     // 
 
-    console.log("HomeStackScreen:", routeName);
+    // console.log("HomeStackScreen:", routeName);
     navigation.setOptions({
       headerLeft: () => (
         <TouchableOpacity onPress={() => { setIsMenuOpen(!isMenuOpen) }} style={styles.menuButton}>
@@ -167,7 +107,7 @@ const CallLogsStackScreen: React.FC<CallLogsStackScreenProps> = ({ navigation, r
                    routeName === 'Search' || 
                    routeName === 'Settings' ||
                    routeName === 'HelpSendFeedback' || 
-                   routeName === 'About' ? false : true, // hide/show header parent
+                   routeName === 'About' ? false : true
     });
   }, [navigation, route]);
 
@@ -251,7 +191,7 @@ const SMSStackScreen: React.FC<SMSStackScreenProps> = ({ navigation, route }) =>
       navigation.setOptions({ tabBarStyle: { display: 'flex' } });
     }
 
-    console.log("HomeStackScreen:", routeName);
+    // console.log("HomeStackScreen:", routeName);
     navigation.setOptions({
       headerLeft: () => (
         <TouchableOpacity onPress={() => { setIsMenuOpen(!isMenuOpen) }} style={styles.menuButton}>
@@ -421,15 +361,46 @@ const MyBlocklistScreen: React.FC<MyBlocklistStackScreenProps> = ({ navigation, 
   )
 }
 
-const App: React.FC = () => {
+const AppNavigator: React.FC = () => {
+  const count = useSelector((state: RootState) => state.counter.value);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(async()=>{
-    let isLogin = await utils.getObject('login')
-    if(isLogin !== null){
-      setIsLoggedIn(true)
-    }
+  // const fetchCallLogs = async () => {
+  //   try {
+  //     const response = await DatabaseHelper.fetchCallLogs();
+  //     console.log("fetchCallLog:", response);
+      
+  //     if (response.status) {
+  //       dispatch(addMultipleCallLogs(response.data));
+  //     } else {
+  //       console.error("fetchCallLog:", response.message);
+  //     }
+
+  //     // setLoading(false)
+  //   } catch (error) {
+  //     console.error("Error fetching call logs:", error);
+
+  //     // setLoading(false)
+  //   }
+  // };
+
+  // addMultipleCallLogs
+  useEffect(()=>{
+    // const checkLogin = async () => {
+    //   let isLogin = await utils.getObject('login');
+    //   if (isLogin !== null) {
+    //     setIsLoggedIn(true);
+    //   }
+    // };
+    // checkLogin();
+
+    // fetchCallLogs()
   }, [])
+
+  // useEffect(()=>{
+  //   console.log("AppNavigator :", count )
+  // },[count])
 
   const handleLogin = async() => {
     await utils.saveObject('login', true)
@@ -442,61 +413,59 @@ const App: React.FC = () => {
   };
 
   return (
-    <Provider>
     <NavigationContainer>
-    {isLoggedIn ? ( 
-      <SafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
-          {/* <Button title="Toggle Menu" onPress={() => setIsMenuOpen(!isMenuOpen)} /> */}
-          <Tab.Navigator>
-            <Tab.Screen 
-              name="Call Logs" 
-              component={CallLogsStackScreen} 
-              options={({ route }) => ({
-                tabBarBadge: 3,
-                // headerShown: false, // hide Header title
-                // tabBarLabel: 'Home',
-                // tabBarStyle: ((route) => {
-                //   const routeName = getFocusedRouteNameFromRoute(route) ?? ""
-                //   console.log("getFocusedRouteNameFromRoute @@@ :", routeName)
-                //   if (routeName === 'profile'  ) {
-                //     console.log("getFocusedRouteNameFromRoute @@@ 5555 :", routeName)
-                //     return ;
-                //   }
-                //   return { display: 'flex' }
-                // })(route),
-                tabBarIcon: ({ color, size }) => (
-                  <Icon name="odnoklassniki" color={color} size={size} />
-                ),
-              })}  
-            />
-            <Tab.Screen 
-              name="SMS" 
-              component={SMSStackScreen} 
-              options={({ route }) => ({
-                tabBarBadge: 2,
-                tabBarIcon: ({ color, size }) => (
-                  <Icon name="envelope-open-o" color={color} size={size} />
-                ),
-              })}  
-            />
-            <Tab.Screen 
-              name="My Blocklist" 
-              component={MyBlocklistScreen} 
-              options={({ route }) => ({
-                tabBarBadge: 9,
-                tabBarIcon: ({ color, size }) => (
-                  <Icon name="lock" color={color} size={size} />
-                ),
-              })}  
-            />
-          </Tab.Navigator>
-        </View>
-      </SafeAreaView>
-       ) : (
-        <LoginScreen onLogin={handleLogin} />
-      )}
+      <LoadingDialog visible={loading} />
+      {isLoggedIn ? ( 
+        <SafeAreaView style={{ flex: 1 }}>
+          <View style={{ flex: 1 }}>
+            <Tab.Navigator>
+              <Tab.Screen 
+                name="Call Logs" 
+                component={CallLogsStackScreen} 
+                options={({ route }) => ({
+                  tabBarBadge: 3,
+                  tabBarIcon: ({ color, size }) => (
+                    <Icon name="odnoklassniki" color={color} size={size} />
+                  ),
+                })}  
+              />
+              <Tab.Screen 
+                name="SMS" 
+                component={SMSStackScreen} 
+                options={({ route }) => ({
+                  tabBarBadge: 2,
+                  tabBarIcon: ({ color, size }) => (
+                    <Icon name="envelope-open-o" color={color} size={size} />
+                  ),
+                })}  
+              />
+              <Tab.Screen 
+                name="My Blocklist" 
+                component={MyBlocklistScreen} 
+                options={({ route }) => ({
+                  tabBarBadge: 9,
+                  tabBarIcon: ({ color, size }) => (
+                    <Icon name="lock" color={color} size={size} />
+                  ),
+                })}  
+              />
+            </Tab.Navigator>
+          </View>
+        </SafeAreaView>
+        ) : (
+          <LoginScreen onLogin={handleLogin} />
+        )}
     </NavigationContainer>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <Provider store={store}>
+      <ProviderPaper>
+        {/* <AppNavigator /> */}
+        <Text>AppNavigator</Text>
+      </ProviderPaper>
     </Provider>
   );
 };
@@ -586,7 +555,7 @@ const styles = StyleSheet.create({
   drawerItemText: {
     marginLeft: 15,
     fontSize: 18,
-  },
+  }
 });
 
 export default App;
