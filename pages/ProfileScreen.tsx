@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, View, Text, Switch, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'; 
 
 import * as utils from "../utils"
 
@@ -9,13 +9,15 @@ const ProfileScreen: React.FC<any> = ({navigation}) => {
       <View style={styles.container}>
         <View style={styles.header}>
           <Image 
-            source={{uri: 'your-banner-image-url'}}
+            source={require("../assets/banner-image.png")}
             style={styles.bannerImage} 
+            resizeMode="cover" 
           />
-          <Image 
+          {/* <Image 
             source={{uri: 'your-profile-image-url'}}
             style={styles.profileImage} 
-          />
+          /> */}
+          <MaterialCommunityIcons name="account" size={80} color="#aaa" style={styles.profileImage}  />
           </View>
 
         <View style={styles.infoContainer}>
@@ -71,7 +73,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#009688',
+    // backgroundColor: 'blue',
     paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
@@ -86,6 +88,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     position: 'absolute',
     bottom: -40,
+    backgroundColor: '#f5f5f5'
   },
   closeButton: {
     position: 'absolute',

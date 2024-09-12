@@ -1,220 +1,110 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { NativeModules, View, Text, StyleSheet, TouchableOpacity, Alert, Image, RefreshControl, ActivityIndicator, FlatList, Button } from 'react-native';
-import { SwipeListView } from 'react-native-swipe-list-view'; // Importing SwipeListView
-import Icon from 'react-native-vector-icons/MaterialIcons'; // Importing the Icon component
-import _ from "lodash";
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, RefreshControl, FlatList } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; 
 import { useSelector, useDispatch } from 'react-redux';
-
-import * as utils from "../utils"
+import { Menu, Divider } from 'react-native-paper';
 
 import { RootState, AppDispatch } from '../redux/store';
-import { increment, decrement, incrementByAmount, incrementAsync } from '../redux/slices/counterSlice';
-import { addCallLog, updateCallLog, removeCallLog, clearCallLogs } from '../redux/slices/calllogSlice';
+import { CallLog, ItemCall } from "../redux/interface";
+import { getDate } from "../utils";
 
-
-
-// import { RootState, AppDispatch } from '../redux/store';
-// import { increment, decrement, setValue } from '../redux/slices/counterSlice';
-
-const { DatabaseHelper } = NativeModules;
-
-interface Contact {
-  id: string;
-  name: string;
-  phone: string;
-  time: string;
-  image: string;
-}
+import BlockReasonModal from './BlockReasonModal'; // Import the modal component
 
 const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  // const count = useSelector((state: RootState) => state.counter.value);
-  // const dispatch = useDispatch<AppDispatch>();
-
-  const [loading, setLoading] = useState(true);
-  const [contacts, setContacts] = useState<Contact[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [visibleMenuId, setVisibleMenuId] = useState<string | null>(null);
+
+  const openMenu = (id: string) => setVisibleMenuId(id);
+  const closeMenu = () => setVisibleMenuId(null);
 
   const dispatch: AppDispatch = useDispatch();
-  const count = useSelector((state: RootState) => state.counter.value);
-  const status = useSelector((state: RootState) => state.counter.status);
-
-  // const dispatch: AppDispatch = useDispatch();
   const callLogs = useSelector((state: RootState) => state.callLog.callLogs);
 
-
-  const fetchContacts = async () => {
-    // let calllogs = await utils.getObject('calllogs');
-
-    // if (calllogs === null) {
-      DatabaseHelper.fetchCallLogs()
-        .then(async (response: any) => {
-          const contacts = [];
-          // _.map(response, (item, i) => {
-          //   contacts.push({
-          //     id: i.toString(),
-          //     name: item.name,
-          //     phone: item.number,
-          //     time: utils.getDate(item.date),
-          //     image: item.photoUri,
-          //   });
-          // });
-          // setContacts(contacts);
-          // await utils.saveObject('calllogs', contacts);
-
-          console.log("CallLogsScreen :", response)
-
-          setLoading(false)
-        })
-        .catch((error: any) =>{
-          setLoading(false);
-          console.log(error);
-        })
-    // } else {
-    //   setContacts(calllogs);
-    // }
-  };
-
-  useEffect(() => {
-    fetchContacts();
-  }, []);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const openModal = () => setModalVisible(true);
+  const closeModal = () => setModalVisible(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchContacts();
     setRefreshing(false);
   }, []);
 
-  const handleBlock = (phone: string) => {
-    Alert.alert(
-      "Block Contact",
-      `Are you sure you want to block ${phone}?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        { text: "OK", onPress: () => {
-          DatabaseHelper.addData({ phoneNumber: phone, detail: "xxxx", reporter: "a1" })
-          .then(async (response: any) => {
-            console.log("response :", response)
-          })
-          .catch((error: any) => console.log(error));
-        }} // Implement your blocking logic here
-      ]
-    );
+  const renderItemCall = (type: string) => {
+    switch (type) {
+      case "1":
+        return <Icon name="call-received" size={17} color="#007AFF" style={styles.icon} />;
+      case "2":
+        return <Icon name="call-made" size={17} color="#007AFF" style={styles.icon} />;
+      case "3":
+        return <Icon name="call-missed" size={17} color="red" style={styles.icon} />;
+      case "4":
+        return <Icon name="phone-outline" size={17} color="#007AFF" style={styles.icon} />;
+      case "5":
+        return <Icon name="call-split" size={17} color="#007AFF" style={styles.icon} />;
+    }
   };
 
-  const renderItem = ({ item }: { item: Contact }) => (
-    // <TouchableOpacity style={styles.itemContainer} onPress={() => { navigation.navigate("CallLogsDetail"); }} onLongPress={() => Alert.alert("onLongPress")}>
-    //   <Image source={{ uri: item.image }} style={styles.image} />
-    //   <View style={styles.detailsContainer}>
-    //     {item.name === 'Unknown' ? null : <Text style={styles.name}>{item.name}</Text>}
-    //     <Text style={styles.phone}>{item.phone}</Text>
-    //   </View>
-    //   <View style={styles.timeContainer}>
-    //     <Text style={styles.time}>{item.time}</Text>
-    //     <Icon name="call" size={20} color="#007AFF" style={styles.icon} />
-    //   </View>
-    // </TouchableOpacity>
-
-    <TouchableOpacity
+  const renderItem = useCallback(({ item }: { item: CallLog }) => {
+    const itemCall: ItemCall = item.callLogs[0];
+    return (
+      <TouchableOpacity
         style={styles.itemContainer}
-        onPress={() => { navigation.navigate("CallLogsDetail"); }}
+        onPress={() => { navigation.navigate("CallLogsDetail", { itemId: itemCall.number }); }}
         onLongPress={() => Alert.alert("onLongPress")}
       >
-        <Image source={{ uri: item.image }} style={styles.image} />
+        <View style={styles.avatarContainer}>
+          {itemCall.photoUri
+            ? <Image source={{ uri: itemCall.photoUri }} style={styles.image} />
+            : <Icon name="account" size={30}  />}
+        </View>
         <View style={styles.detailsContainer}>
-          {item.name === 'Unknown' ? null : <Text style={styles.name}>{item.name}</Text>}
-          <Text style={styles.phone}>{item.phone}</Text>
+          <Text style={styles.name}>{itemCall.name}</Text>
+          <Text style={styles.phone}>{item.number}</Text>
         </View>
         <View style={styles.timeContainer}>
-          <Text style={styles.time}>{item.time}</Text>
-          <Icon name="call" size={20} color="#007AFF" style={styles.icon} />
-          <TouchableOpacity
-            // style={styles.menuButton}
-            onPress={() => Alert.alert("Menu options")}
+          <Menu
+            visible={visibleMenuId === item.number}
+            onDismiss={closeMenu}
+            anchor={
+              <TouchableOpacity onPress={() => openMenu(item.number)}>
+                <Icon name="dots-vertical" size={24} color="#555" />
+              </TouchableOpacity>
+            }
           >
-            <Icon name="more-vert" size={24} color="#000" />
-          </TouchableOpacity>
+            <Menu.Item 
+              onPress={() =>{
+                openModal();
+                closeMenu();
+              }} title="Block" />
+            <Divider />
+            <Menu.Item onPress={() => {}} title="Report" />
+          </Menu>
+          <View style={styles.timeAndIconContainer}>
+            {renderItemCall(itemCall.type)}
+            <Text style={styles.time}>{getDate(Number(itemCall.date))}</Text>
+          </View>
         </View>
-    </TouchableOpacity>
-  );
-
-
-  const handleAddLog = () => {
-    const min = 1;
-    const max = 100;
-    const rand = min + Math.random() * (max - min);
-    const newLog = {
-      id: rand.toString(),
-      name: 'Sample Name',
-      number: '1234567890',
-      photoUri: null,
-      type: 'Incoming',
-      date: Date.now().toString(),
-    };
-    dispatch(addCallLog(newLog));
-  };
-
-  const handleUpdateCallLog = (id: string) => {
-    const min = 100;
-    const max = 100000;
-    const rand = min + Math.random() * (max - min);
-
-    dispatch(updateCallLog({
-      id,
-      updatedData: { name: 'Updated Name + '+ rand }, // Example update
-    }));
-  };
-
-  const handleRemoveCallLog = (id: string) => {
-    dispatch(removeCallLog(id));
-  };
+      </TouchableOpacity>
+    );
+  }, [visibleMenuId]);
 
   return (
-    // <View>
-      <View style={styles.container}>
-        {/*  */}
-        <Button title="Add Call Log" onPress={() =>handleAddLog()} />
-        {callLogs.map((log) => (
-          <View key={log.date}>
-            <Text>{log.id}</Text>
-            <Text>{log.name}</Text>
-            <Text>{log.number}</Text>
-            <Text>{log.date}</Text>
-            <Text>{log.type}</Text>
-            <Button title="Update" onPress={() =>{
-              handleUpdateCallLog(log.id)
-            }} />
-           <Button title="Remove" onPress={() =>{
-              handleRemoveCallLog(log.id)
-            }} />
-          </View>
-        ))}
-        {/*  */}
-
-        <Text style={styles.count}>{count}</Text>
-        <Button title="Increment" onPress={() => dispatch(increment())} />
-        <Button title="Decrement" onPress={() => dispatch(decrement())} />
-        <Button title="Increment by 5" onPress={() => dispatch(incrementByAmount(5))} />
-        <Button
-          title="Increment Async"
-          onPress={() => dispatch(incrementAsync(10))}
-          disabled={status === 'loading'}
-        />
-        {status === 'loading' && <ActivityIndicator size="small" color="#0000ff" />}
-        {status === 'failed' && <Text style={styles.error}>Error occurred</Text>}
-      </View>
-      // {
-      //   loading 
-      //   ? <ActivityIndicator color={"#fff"}  size={'large'}/>
-      //   : <FlatList
-      //       data={contacts}
-      //       renderItem={renderItem}
-      //       keyExtractor={(item) => item.id}
-      //       refreshControl={ <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> }/>
-      // } 
-    // </View>
+    <>
+      <FlatList
+        data={callLogs}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.number}
+        initialNumToRender={10}
+        windowSize={5}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        ItemSeparatorComponent={() => <Divider />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      />
+      {
+        isModalVisible && <BlockReasonModal visible={isModalVisible} onClose={closeModal} />
+      }
+    </>
   );
 };
 
@@ -223,29 +113,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    backgroundColor:'#ccc'
   },
-  hiddenContainer: {
-    flex: 1,
-    alignItems: 'flex-end',
+  avatarContainer: {
+    width: 60,
+    height: 60,
     justifyContent: 'center',
-    paddingRight: 15,
-  },
-  blockButton: {
-    borderRadius: 5,
-  },
-  blockText: {
-    color: '#000',
-    fontWeight: 'bold',
+    alignItems: 'center',
+    borderRadius: 35, // Half of width/height for a circular shape
+    backgroundColor: '#eee', // Background color if no image
+    marginRight: 15,
   },
   image: {
-    width: 50,
-    height: 50,
-    borderRadius: 25, // Circular image
-    marginRight: 10,
+    width: '100%',
+    height: '100%',
+    borderRadius: 35,
   },
   detailsContainer: {
-    flex: 1, // Allows the name and phone to take available space
+    flex: 1,
   },
   name: {
     fontWeight: 'bold',
@@ -254,30 +138,19 @@ const styles = StyleSheet.create({
     color: '#555',
   },
   timeContainer: {
-    alignItems: 'flex-end', // Align time and icon to the right
+    alignItems: 'flex-end',
     justifyContent: 'center',
+  },
+  timeAndIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   time: {
     color: '#888',
+    marginLeft: 5,
   },
   icon: {
-    marginTop: 5, // Space between time and icon
-  },
-
-
-
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  count: {
-    fontSize: 32,
-    marginBottom: 20,
-  },
-  error: {
-    color: 'red',
-    marginTop: 10,
+    marginRight: 5,
   },
 });
 

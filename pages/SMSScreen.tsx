@@ -1,201 +1,125 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, NativeModules, Alert, RefreshControl, FlatList } from 'react-native';
-import { SwipeListView } from 'react-native-swipe-list-view'; // Importing SwipeListView
-import Icon from 'react-native-vector-icons/Ionicons'; // Importing the Icon component
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet, RefreshControl, FlatList } from 'react-native';
 import _ from "lodash";
-import * as utils from "../utils";
-import SMSDetailModal from "../modal/SMSDetailModal";
+import { useSelector, useDispatch } from 'react-redux';
+import { Menu, Divider } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; 
 
-const { DatabaseHelper } = NativeModules;
+import { RootState, AppDispatch } from '../redux/store';
+import { SmsLog, ItemSms } from "../redux/interface"
 
-interface Message {
-  body: string;
-  date: string; // Assuming date is stored as a string (timestamp)
-  id: string;
-  name: string;
-  number: string;
-  photoUri: string | undefined; // photoUri can be a string or null
-  read: number; // 1 for read, 0 for unread
-  status: string; // Status as a string
-  thread_id: string;
-  type: string;
-}
+import * as utils from "../utils"
 
-interface SmsLog {
-  address: string;
-  messages: Message[];
-}
-
-function getDate(format: string = 'MM/DD'): string {
-  const today = new Date();
-  const month = (today.getMonth() + 1).toString().padStart(2, '0'); // Add leading zero
-  const year = today.getFullYear();
-  const date = today.getDate().toString().padStart(2, '0'); // Add leading zero
-
-  switch (format) {
-    case 'DD/MM':
-      return `${date}/${month}`;
-    case 'YYYY-MM-DD':
-      return `${year}-${month}-${date}`;
-    default: // 'MM/DD'
-      return `${month}/${date}`;
-  }
-}
-
-const findLastUpdatedSmsLog = (logs: SmsLog[]): SmsLog | undefined => {
+const findLastUpdatedSmsLog = (logs: ItemSms[]): ItemSms => {
   return logs.reduce((latest, current) => {
-      return (latest === null || Number(current.date) > Number(latest.date)) ? current : latest;
-  }, null as SmsLog | null);
+      return ( latest === null || Number(current.date) > Number(latest.date)) ? current : latest;
+  });
 };
 
-const SMSScreen: React.FC = ({ navigation }) => {
-  const [smss, setSmss] = useState<SmsLog[]>([]);
-  const [smsDetailVisible, setSMSDetailVisible] = useState(false);
-  const [refreshing, setRefreshing] = useState(false); // State for pull-to-refresh
+const SMSScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+  const [refreshing, setRefreshing] = useState(false); 
+  const [visibleMenuId, setVisibleMenuId] = useState<string | null>(null);
 
-  const fetchSmsLogs = async () => {
-    try {
-      let smslogs = await utils.getObject('smslogs');
+  const openMenu = (id: string) => setVisibleMenuId(id);
+  const closeMenu = () => setVisibleMenuId(null);
 
-      console.log("SMSScreen :", smslogs)
-
-      // if (smslogs === null || _.isEmpty(smslogs)) {
-      //   console.log("fetch data ...");
-      //   const response = await DatabaseHelper.fetchSmsLogs();
-      //   console.log("fetchSmsLogs response :", response);
-
-      //   setSmss(response);
-      //   await utils.saveObject('smslogs', response);
-      // } else {
-      //   setSmss(smslogs);
-      // }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  useEffect(() => {
-    fetchSmsLogs();
-  }, []);
+  const smsLogs = useSelector((state: RootState) => state.smsLog.smsLogs);
+  console.log("smsLogs length :", smsLogs, smsLogs.length)
+  
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchSmsLogs();
     setRefreshing(false);
   };
 
-  const closeSMSDetailModal = () => {
-    setSMSDetailVisible(false);
-  };
-
-  const handleBlock = (phone: string) => {
-    Alert.alert(
-      "Block Contact",
-      `Are you sure you want to block ${phone}?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        { text: "OK", onPress: () => console.log(`Blocked: ${phone}`) } // Implement your blocking logic here
-      ]
-    );
-  };
-
   const renderItem = ({ item }: { item: SmsLog }) => {
-    const lastMessage: SmsLog | undefined = findLastUpdatedSmsLog(item.messages);
+    const lastMessage: ItemSms = findLastUpdatedSmsLog(item.messages);
     const callCount = _.filter(item.messages, item => item.read === 0).length;
 
+    console.log("renderItem :", lastMessage)
     return (
       <TouchableOpacity
         style={styles.itemContainer}
-        onPress={() => {
-          navigation.navigate('SMSDetail', { thread_id: lastMessage.thread_id });
-        }}
-      >
-        {/* <SMSDetailModal thread_id={lastMessage.thread_id} visible={smsDetailVisible} onClose={closeSMSDetailModal} title="SMS Detail" /> */}
-        <Image source={{ uri: lastMessage.photoUri }} style={styles.image} />
+        onPress={() => { navigation.navigate('SMSDetail', { thread_id: lastMessage.thread_id }); }}>
+        <View style={styles.avatarContainer}>
+          {
+            lastMessage.photoUri 
+            ? <Image source={{ uri: lastMessage.photoUri }} style={styles.image} />
+            : <Icon name="account" size={30}  style={styles.image} />
+          }
+        </View>
         <View style={styles.detailsContainer}>
           {lastMessage.name === 'Unknown' ? <></> : <Text style={styles.name}>{lastMessage.name}</Text>}
           <Text style={styles.phone}>{item.address}</Text>
           <Text style={styles.note}>{lastMessage.body}</Text>
         </View>
         <View style={styles.timeContainer}>
-          <Text style={styles.time}>{getDate(lastMessage.date)}</Text>
+          {/* <TouchableOpacity onPress={() => openMenu(item.number) {}}>
+            <Icon name="dots-vertical" size={24} color="#555" />
+          </TouchableOpacity> */}
+
+          <Menu
+            visible={visibleMenuId === item.address}
+            onDismiss={closeMenu}
+            anchor={
+              <TouchableOpacity onPress={() => openMenu(item.address)}>
+                <Icon name="dots-vertical" size={24} color="#555" />
+              </TouchableOpacity>
+            }>
+            <Menu.Item 
+              onPress={() =>{
+                // openModal();
+                closeMenu();
+              }} title="Block" />
+            <Divider />
+            <Menu.Item 
+              onPress={() => {
+                closeMenu();
+              }} title="Report" />
+          </Menu>
+          <Text style={styles.time}>{utils.getDate(Number(lastMessage.date))}</Text>
           {_.isEmpty(callCount) ? <></> : <View style={styles.callCountContainer}><Text style={styles.callCount}>{callCount.toString()}</Text></View>}
         </View>
       </TouchableOpacity>
     );
   };
 
-  const renderHiddenItem = (data: { item: SmsLog }) => (
-    <View style={styles.hiddenContainer}>
-      <TouchableOpacity style={styles.blockButton} onPress={() => handleBlock(data.item.phone)}>
-        <Text style={styles.blockText}>Block</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
   return (
-    // <SwipeListView
-    //   data={smss}
-    //   renderItem={renderItem}
-    //   renderHiddenItem={renderHiddenItem}
-    //   keyExtractor={(item) => item.address}
-    //   rightOpenValue={-75} // Width of the hidden block button
-    //   style={styles.list}
-    //   initialNumToRender={8}
-    //   refreshControl={
-    //     <RefreshControl
-    //       refreshing={refreshing}
-    //       onRefresh={onRefresh}
-    //     />
-    //   }
-    // />
-
     <FlatList
-      data={smss}
+      data={smsLogs}
       renderItem={renderItem}
       keyExtractor={(item) => item.address}
-      refreshControl={ <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> }/>
-  );
+      initialNumToRender={10} // Adjust this number based on screen size
+      windowSize={5} // Adjust for optimal off-screen rendering
+      removeClippedSubviews={true} // Helps improve performance for large lists
+      maxToRenderPerBatch={10} // Renders a small batch of items at a time
+      ItemSeparatorComponent={() => <Divider />}  // Add a divider between items
+      refreshControl={ <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> }/>);
 };
 
 const styles = StyleSheet.create({
-  list: {
-    // padding: 10,
-  },
   itemContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start', // Align items to the start
+    alignItems: 'center', // Center items vertically
     padding: 10,
-    // borderBottomWidth: 1,
-    backgroundColor: '#ccc',
+    // backgroundColor: '#ccc',
+  },
+  avatarContainer: {
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 30, // Half of width/height for a circular shape
+    backgroundColor: '#eee', // Background color if no image
+    marginRight: 15,
   },
   image: {
-    width: 50,
-    height: 50,
-    borderRadius: 25, // Circular image
-    marginRight: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 15, // Half of width/height for a circular image
   },
   detailsContainer: {
-    flex: 1, // Allows the name and phone to take available space
-  },
-  hiddenContainer: {
-    // backgroundColor: '#FF3B30',
     flex: 1,
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    paddingRight: 15,
-  },
-  blockButton: {
-    // backgroundColor: '#FF3B30',
-    // padding: 15,
-    borderRadius: 5,
-  },
-  blockText: {
-    color: '#000',
-    fontWeight: 'bold',
   },
   name: {
     fontWeight: 'bold',
@@ -205,10 +129,10 @@ const styles = StyleSheet.create({
   },
   note: {
     color: '#777',
-    marginTop: 4, // Space between phone and note
+    marginTop: 4,
   },
   timeContainer: {
-    alignItems: 'flex-end', // Align time and icon to the right
+    alignItems: 'flex-end', 
     justifyContent: 'center',
   },
   time: {
@@ -229,5 +153,6 @@ const styles = StyleSheet.create({
     fontSize: 14, // Adjust font size as needed
   },
 });
+
 
 export default SMSScreen;

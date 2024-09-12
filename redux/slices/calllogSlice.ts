@@ -1,4 +1,3 @@
-// src/slices/calllogSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { CallLog } from '../interface';
 
@@ -17,27 +16,37 @@ const calllogSlice = createSlice({
   initialState,
   reducers: {
     addCallLog: (state, action: PayloadAction<CallLog>) => {
-      // state.callLogs.push(action.payload);
-      const newCallLog = {
+      const newLog = {
         ...action.payload,
-        createdAt: new Date().toISOString(), // Set createdAt to now
-        updatedAt: new Date().toISOString(), // Set updatedAt to now
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
-      state.callLogs.push(newCallLog);
+
+      // Check if the log already exists
+      const exists = state.callLogs.some(log => log.number === newLog.number);
+
+      if (!exists) {
+        state.callLogs.push(newLog);
+      }
     },
-    // New action to add multiple call logs
     addMultipleCallLogs: (state, action: PayloadAction<CallLog[]>) => {
-      const newCallLogs = action.payload.map(log => ({
+      const newLogs = action.payload.map(log => ({
         ...log,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }));
+
+      // Filter out duplicates
+      const filteredLogs = newLogs.filter(log => 
+        !state.callLogs.some(existingLog => existingLog.number === log.number)
+      );
+
       state.lastUpdated = new Date().toISOString();
-      state.callLogs.push(...newCallLogs); // Add multiple logs at once
+      state.callLogs.push(...filteredLogs);
     },
-    updateCallLog: (state, action: PayloadAction<{ id: string; updatedData: Partial<CallLog> }>) => {
-      const { id, updatedData } = action.payload;
-      const index = state.callLogs.findIndex(callLog => callLog.id === id);
+    updateCallLog: (state, action: PayloadAction<{ number: string; updatedData: Partial<CallLog> }>) => {
+      const { number, updatedData } = action.payload;
+      const index = state.callLogs.findIndex(callLog => callLog.number === number);
 
       if (index !== -1) {
         state.callLogs[index] = {
@@ -48,9 +57,10 @@ const calllogSlice = createSlice({
       }
     },
     removeCallLog: (state, action: PayloadAction<string>) => {
-      state.callLogs = state.callLogs.filter(log => log.id !== action.payload);
+      state.callLogs = state.callLogs.filter(log => log.number !== action.payload);
     },
     clearCallLogs: (state) => {
+      state.lastUpdated = "";
       state.callLogs = [];
     }
   }

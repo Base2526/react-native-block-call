@@ -21,17 +21,23 @@ export const getObject = async (name: string) => {
     }
 };
 
-export const getDate = (format: string = 'MM/DD'): string =>{
-  const today = new Date();
+export const getDate = (timestamp, format: string = 'MM/DD'): string => {
+  const today = new Date(timestamp);
   const month = (today.getMonth() + 1).toString().padStart(2, '0'); // Add leading zero
   const year = today.getFullYear();
   const date = today.getDate().toString().padStart(2, '0'); // Add leading zero
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const hours = today.getHours().toString().padStart(2, '0'); // Add leading zero
+  const minutes = today.getMinutes().toString().padStart(2, '0'); // Add leading zero
+  const day = dayNames[today.getDay()]; // Get the day name (e.g., 'Thu')
 
   switch (format) {
     case 'DD/MM':
       return `${date}/${month}`;
     case 'YYYY-MM-DD':
       return `${year}-${month}-${date}`;
+    case 'YYYY/MM/DD Day HH:mm':
+      return `${year}/${month}/${date} ${day} ${hours}:${minutes}`;
     default: // 'MM/DD'
       return `${month}/${date}`;
   }
