@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 import { Provider as ProviderPaper } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { ApolloProvider } from '@apollo/client';
+import SplashScreen from 'react-native-splash-screen';
 
 import LoginScreen from './pages/LoginScreen';
 import CallLogsStackScreen from "./pages/CallLogsStackScreen";
@@ -140,6 +141,10 @@ export const AppNavigator: React.FC = () => {
 };
 
 export const App: React.FC = () => {
+  useEffect(() => {
+    SplashScreen.hide(); // Hide splash screen once app is loaded
+  }, []);
+
   return (
     <ApolloProvider client={client}>
       <Provider store={store}>

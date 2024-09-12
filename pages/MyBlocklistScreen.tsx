@@ -1,139 +1,133 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, NativeModules, Alert, RefreshControl, FlatList } from 'react-native';
-import { SwipeListView } from 'react-native-swipe-list-view';
-import Icon from 'react-native-vector-icons/Ionicons';
-import _ from "lodash"
-import * as utils from "../utils"
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, RefreshControl, FlatList } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; 
+import { useSelector, useDispatch } from 'react-redux';
+import { Menu, Divider } from 'react-native-paper';
 
-const { DatabaseHelper } = NativeModules;
+import { RootState, AppDispatch } from '../redux/store';
+import { CallLog, ItemCall } from "../redux/interface";
+import { getDate } from "../utils";
 
-interface Block {
-  ID: string;
-  NAME: string;
-  PHONE_NUMBER: string;
-  DETAIL: string;
-  PHOTO_URI: string;
-  REPORTER: string; 
-}
+import BlockReasonModal from './BlockReasonModal'; // Import the modal component
 
-const MyBlocklistScreen = () => {
-  const [blocks, setBlocks] = useState<Block[]>([]);
+const MyBlocklistScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
+  const [visibleMenuId, setVisibleMenuId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchData();
+  const openMenu = (id: string) => setVisibleMenuId(id);
+  const closeMenu = () => setVisibleMenuId(null);
+
+  const dispatch: AppDispatch = useDispatch();
+  const callLogs = useSelector((state: RootState) => state.callLog.callLogs);
+
+  const [isModalVisible, setModalVisible] = useState(false);
+  const openModal = () => setModalVisible(true);
+  const closeModal = () => setModalVisible(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setRefreshing(false);
   }, []);
 
-  const fetchData = async () => {
-    try {
-      const response = await DatabaseHelper.getAllData();
-      console.log("getAllData response:", response);
-      setBlocks(response);
-    } catch (error) {
-      console.log(error);
+  const renderItemCall = (type: string) => {
+    switch (type) {
+      case "1":
+        return <Icon name="call-received" size={17} color="#007AFF" style={styles.icon} />;
+      case "2":
+        return <Icon name="call-made" size={17} color="#007AFF" style={styles.icon} />;
+      case "3":
+        return <Icon name="call-missed" size={17} color="red" style={styles.icon} />;
+      case "4":
+        return <Icon name="phone-outline" size={17} color="#007AFF" style={styles.icon} />;
+      case "5":
+        return <Icon name="call-split" size={17} color="#007AFF" style={styles.icon} />;
     }
   };
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchData();
-    setRefreshing(false);
-  };
-
-  const renderItem = ({ item }: { item: Block }) => (
-    <View style={styles.itemContainer}>
-      <Image source={{ uri: item.PHOTO_URI }} style={styles.image} />
-      <View style={styles.detailsContainer}>
-        {item.NAME !== 'Unknown' && <Text style={styles.name}>{item.NAME}</Text>}
-        <Text style={styles.phone}>{item.PHONE_NUMBER}</Text>
-        <Text style={styles.note}>{item.DETAIL}</Text> 
-      </View>
-      <View style={styles.timeContainer}>
-        {/* Add any time-related views here */}
-      </View>
-    </View>
-  );
-
-  const handleUnblock = (id: string) => {
-    Alert.alert(
-      "Unblock Contact",
-      `Are you sure you want to unblock ${id}?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        { 
-          text: "OK", 
-          onPress: async () => {
-            try {
-              const response = await DatabaseHelper.deleteData(id);
-              console.log("response:", response);
-              fetchData(); // Refresh the list after unblocking
-            } catch (error) {
-              console.log(error);
+  const renderItem = useCallback(({ item }: { item: CallLog }) => {
+    const itemCall: ItemCall = item.callLogs[0];
+    return (
+      <TouchableOpacity
+        style={styles.itemContainer}
+        onPress={() => { navigation.navigate("CallLogsDetail", { itemId: itemCall.number }); }}
+        onLongPress={() => Alert.alert("onLongPress")}
+      >
+        <View style={styles.avatarContainer}>
+          {itemCall.photoUri
+            ? <Image source={{ uri: itemCall.photoUri }} style={styles.image} />
+            : <Icon name="account" size={30}  />}
+        </View>
+        <View style={styles.detailsContainer}>
+          <Text style={styles.name}>{itemCall.name}</Text>
+          <Text style={styles.phone}>{item.number}</Text>
+        </View>
+        <View style={styles.timeContainer}>
+          <Menu
+            visible={visibleMenuId === item.number}
+            onDismiss={closeMenu}
+            anchor={
+              <TouchableOpacity onPress={() => openMenu(item.number)}>
+                <Icon name="dots-vertical" size={24} color="#555" />
+              </TouchableOpacity>
             }
-          } 
-        }
-      ]
-    );
-  };
-
-  const renderHiddenItem = (data: { item: Block }) => (
-    <View style={styles.hiddenContainer}>
-      <TouchableOpacity style={styles.blockButton} onPress={() => handleUnblock(data.item.ID)}>
-        <Text style={styles.blockText}>Unblock</Text>
+          >
+            <Menu.Item 
+              onPress={() =>{
+                openModal();
+                closeMenu();
+              }} title="Unblock" />
+          </Menu>
+          <View style={styles.timeAndIconContainer}>
+            {/* {renderItemCall(itemCall.type)} */}
+            <Text style={styles.time}>{getDate(Number(itemCall.date))}</Text>
+          </View>
+        </View>
       </TouchableOpacity>
-    </View>
-  );
+    );
+  }, [visibleMenuId]);
 
   return (
-    // <SwipeListView
-    //   data={blocks}
-    //   renderItem={renderItem}
-    //   renderHiddenItem={renderHiddenItem}
-    //   keyExtractor={(item) => item.ID}
-    //   rightOpenValue={-75}
-    //   refreshControl={
-    //     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-    //   }
-    // />
-    <FlatList
-      data={blocks}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.ID}
-      refreshControl={ <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> }/>
+    <>
+      <FlatList
+        data={callLogs}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.number}
+        initialNumToRender={10}
+        windowSize={5}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        ItemSeparatorComponent={() => <Divider />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      />
+      {
+        isModalVisible && <BlockReasonModal visible={isModalVisible} onClose={closeModal} />
+      }
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     padding: 10,
-    backgroundColor: '#ccc',
+  },
+  avatarContainer: {
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 35, // Half of width/height for a circular shape
+    backgroundColor: '#eee', // Background color if no image
+    marginRight: 15,
   },
   image: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 10,
+    width: '100%',
+    height: '100%',
+    borderRadius: 35,
   },
   detailsContainer: {
     flex: 1,
-  },
-  hiddenContainer: {
-    flex: 1,
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    paddingRight: 15,
-  },
-  blockButton: {
-    borderRadius: 5,
-  },
-  blockText: {
-    color: '#000',
-    fontWeight: 'bold',
   },
   name: {
     fontWeight: 'bold',
@@ -141,13 +135,20 @@ const styles = StyleSheet.create({
   phone: {
     color: '#555',
   },
-  note: {
-    color: '#777',
-    marginTop: 4,
-  },
   timeContainer: {
     alignItems: 'flex-end',
     justifyContent: 'center',
+  },
+  timeAndIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  time: {
+    color: '#888',
+    marginLeft: 5,
+  },
+  icon: {
+    marginRight: 5,
   },
 });
 

@@ -14,6 +14,9 @@ import com.yourprojectname.newarchitecture.MainApplicationReactNativeHost;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+// react-native-splash-screen >= 0.3.1
+import org.devio.rn.splashscreen.SplashScreenReactPackage;
+
 public class MainApplication extends Application implements ReactApplication {
 
   private final ReactNativeHost mReactNativeHost =
@@ -32,6 +35,7 @@ public class MainApplication extends Application implements ReactApplication {
 
 //            ReactApplicationContext
             packages.add( new DatabasePackage()  ); // Add this line
+//            packages.add( new SplashScreenReactPackage()  ); // Add this line
           return packages;
         }
 

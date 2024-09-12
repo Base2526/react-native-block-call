@@ -35,3 +35,16 @@ export interface SmsLog {
     createdAt?: string; 
     updatedAt?: string; 
 }
+
+export enum BlockType {
+    call = 0,
+    sms = 1
+}
+
+export interface BlockLog {
+    type: BlockType;
+    name: string;
+    address: string; // phone & address
+    createdAt?: string; 
+    updatedAt?: string; 
+}

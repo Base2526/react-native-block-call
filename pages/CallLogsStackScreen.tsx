@@ -55,10 +55,9 @@ const CallLogsStackScreen: React.FC<CallLogsStackScreenProps> = ({ navigation, r
             <TabIconWithMenu 
               iconName="ellipsis-v"
               menuItems={[
-                { label: 'Item 1', onPress: () => console.log('Item 1 pressed') },
-                { label: 'Item 2', onPress: () => console.log('Item 2 pressed') },
-              ]}
-            />
+                { label: 'Clear all', onPress: () => console.log('Item 1 pressed') },
+                // { label: 'Item 2', onPress: () => console.log('Item 2 pressed') },
+              ]}/>
           </View>
         ),
         headerShown: routeName === "Profile" || 

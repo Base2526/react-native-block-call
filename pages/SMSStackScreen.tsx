@@ -6,7 +6,7 @@ import { NavigationProp } from '@react-navigation/core';
 import { createStackNavigator } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-
+import TabIconWithMenu from "../TabIconWithMenu";
 import SettingsScreen from "./SettingsScreen";
 import HelpSendFeedbackScreen from "./HelpSendFeedbackScreen";
 import AboutScreen from './AboutScreen';
@@ -54,6 +54,11 @@ const SMSStackScreen: React.FC<SMSStackScreenProps> = ({ navigation, route }) =>
               onPress={()=>{ navigation.navigate("Search") }}>
               <Icon name="search" size={25} color="#333" />
             </TouchableOpacity>
+            <TabIconWithMenu 
+              iconName="ellipsis-v"
+              menuItems={[
+                { label: 'Clear all', onPress: () => console.log('Item 1 pressed') },
+              ]}/>
           </View>
         ),
         headerShown:  routeName === "Profile" ||
@@ -124,4 +129,3 @@ const styles = StyleSheet.create({
 });
 
 export default SMSStackScreen;
-  

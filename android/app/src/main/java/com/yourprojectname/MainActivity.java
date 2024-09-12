@@ -26,6 +26,8 @@ import androidx.core.content.ContextCompat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+// react-native-splash-screen >= 0.3.1
+import org.devio.rn.splashscreen.SplashScreen; // here
 
 public class MainActivity extends ReactActivity {
   private static String TAG = MainActivity.class.getName();
@@ -73,6 +75,7 @@ public class MainActivity extends ReactActivity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+    SplashScreen.show(this);  // here
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.activity_main);
 
