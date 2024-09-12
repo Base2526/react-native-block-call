@@ -1,54 +1,152 @@
-// App.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { SafeAreaView, View, NativeModules } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { Provider } from 'react-redux';
+import { Provider as ProviderPaper } from 'react-native-paper';
+import { useSelector, useDispatch } from 'react-redux';
+import { ApolloProvider } from '@apollo/client';
 
-// Import your screen components
-import HomeScreen from './pages/HomeScreen'; // Create this component
-import SettingsScreen from './pages/SettingsScreen'; // Create this component
-import ProfileScreen from './pages/ProfileScreen'; // Create this component
+import LoginScreen from './pages/LoginScreen';
+import CallLogsStackScreen from "./pages/CallLogsStackScreen";
+import SMSStackScreen from "./pages/SMSStackScreen";
+import MyBlocklistStackScreen from "./pages/MyBlocklistStackScreen";
+import * as utils from "./utils"
+import { store } from './redux/store';
+import { RootState, AppDispatch } from './redux/store';
+import LoadingDialog from './LoadingDialog';
+import { addMultipleCallLogs, clearCallLogs } from './redux/slices/calllogSlice'
+import { addMultipleSmsLogs, clearSmsLogs } from './redux/slices/smslogSlice'
+import client from './apollo/apolloClient';
 
 const Tab = createBottomTabNavigator();
-const Drawer = createDrawerNavigator();
+const { DatabaseHelper } = NativeModules;
 
-const TabNavigator = () => {
-    return (
-        <Tab.Navigator>
-            <Tab.Screen name="Home" component={HomeScreen} />
-            <Tab.Screen name="Profile" component={ProfileScreen} />
-        </Tab.Navigator>
-    );
+export const AppNavigator: React.FC = () => {
+  const count = useSelector((state: RootState) => state.counter.value);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const dispatch: AppDispatch = useDispatch();
+
+  const callLogs = useSelector((state: RootState) => state.callLog.callLogs);
+  const smsLogs = useSelector((state: RootState) => state.smsLog.smsLogs);
+
+  const fetchCallLogs = async () => {
+    try {
+      // dispatch(clearCallLogs());
+
+      const response = await DatabaseHelper.fetchCallLogs();
+      console.log("fetchCallLog:", response);
+      
+      if (response.status) {
+        dispatch(addMultipleCallLogs(response.data));
+      } else {
+        console.error("fetchCallLog:", response.message);
+      }
+    } catch (error) {
+      console.error("Error fetching call logs:", error);
+    }
+  };
+
+  const fetchSmsLogs = async () => {
+    try {
+      // dispatch(clearSmsLogs());
+
+      const response = await DatabaseHelper.fetchSmsLogs();
+      console.log("fetchSmsLogs:", response);
+      
+      if (response.status) {
+        dispatch(addMultipleSmsLogs(response.data));
+      } else {
+        console.error("fetchSmsLogs:", response.message);
+      }
+    } catch (error) {
+      console.error("Error fetching sms logs:", error);
+    }
+  };
+
+  useEffect(()=>{
+    const checkLogin = async () => {
+      let isLogin = await utils.getObject('login');
+      if (isLogin !== null) {
+        setIsLoggedIn(true);
+      }
+    };
+    checkLogin();
+
+    fetchCallLogs();
+    fetchSmsLogs();
+
+    setLoading(false)
+  }, [])
+
+  const handleLogin = async() => {
+    await utils.saveObject('login', true)
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = async() => {
+    await utils.saveObject('login', null)
+    setIsLoggedIn(false);
+  };
+
+  return (
+    <NavigationContainer>
+      <LoadingDialog visible={loading} />
+      {isLoggedIn ? ( 
+        <SafeAreaView style={{ flex: 1 }}>
+          <View style={{ flex: 1 }}>
+            <Tab.Navigator>
+              <Tab.Screen 
+                name={`Call Logs (${callLogs.length})`}
+                component={CallLogsStackScreen} 
+                options={({ route }) => ({
+                  tabBarBadge: 3,
+                  tabBarIcon: ({ color, size }) => (
+                    <Icon name="odnoklassniki" color={color} size={size} />
+                  ),
+                })}  
+              />
+              <Tab.Screen 
+                name={`SMS (${smsLogs.length})`}
+                component={SMSStackScreen} 
+                options={({ route }) => ({
+                  tabBarBadge: 2,
+                  tabBarIcon: ({ color, size }) => (
+                    <Icon name="envelope-open-o" color={color} size={size} />
+                  ),
+                })}  
+              />
+              <Tab.Screen 
+                name="My Blocklist" 
+                component={MyBlocklistStackScreen} 
+                options={({ route }) => ({
+                  tabBarBadge: 9,
+                  tabBarIcon: ({ color, size }) => (
+                    <Icon name="lock" color={color} size={size} />
+                  ),
+                })}  
+              />
+            </Tab.Navigator>
+          </View>
+        </SafeAreaView>
+        ) : (
+          <LoginScreen onLogin={handleLogin} />
+        )}
+    </NavigationContainer>
+  );
 };
 
-const App = () => {
-    return (
-        <NavigationContainer>
-            <Drawer.Navigator initialRouteName="Home">
-                <Drawer.Screen 
-                    name="Home" 
-                    component={TabNavigator} 
-                    // options={{ headerTitle: 'Home Page' }}
-                    options={({ route }) => ({
-                        // headerTitle: route.params?.title || 'Details', // Change title based on params
-                        headerRight: () => (
-                            // <Icon.Button 
-                            //   name="search" 
-                            //   size={25} 
-                            //   backgroundColor="transparent" 
-                            //   onPress={() => {
-                            //     // Handle search icon press
-                            //     console.log('Search icon pressed');
-                            //   }}
-                            // />
-                            <Text>Profile Screen</Text>
-                          ),
-                    })} />
-                <Drawer.Screen name="Settings" component={SettingsScreen} />
-            </Drawer.Navigator>
-        </NavigationContainer>
-    );
+export const App: React.FC = () => {
+  return (
+    <ApolloProvider client={client}>
+      <Provider store={store}>
+        <ProviderPaper>
+          <AppNavigator />
+        </ProviderPaper>
+      </Provider>
+    </ApolloProvider>
+  );
 };
-
-export default App;

@@ -13,19 +13,24 @@ import com.facebook.react.bridge.WritableMap;
 import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
+    private static Context context = null;
     private static final String DATABASE_NAME = "mydatabase.db";
-    private static final String TABLE_NAME = "mytable";
+    private static final String TABLE_NAME = "BLOCK";
     private static final String COL_ID = "ID";
     private static final String COL_PHONE_NUMBER = "PHONE_NUMBER";
     private static final String COL_DETAIL = "DETAIL";
     private static final String COL_REPORTER = "REPORTER";
     private static final String COL_STATUS = "STATUS";
+    private static final String COL_TYPE   = "TYPE";
     private static final String COL_CREATE_AT = "CREATE_AT";
     private static final String COL_UPDATE_AT = "UPDATE_AT";
 
+    private static final String COL_NAME = "NAME";
+    private static final String COL_PHOTO_URI = "PHOTO_URI";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, 1);
+        this.context = context;
     }
 
     @Override
@@ -78,13 +83,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return true; // All inserts were successful
     }
 
-//    Get all entries
-//    public Cursor getAllData() {
-//        SQLiteDatabase db = this.getWritableDatabase();
-//        return db.rawQuery("SELECT * FROM " + TABLE_NAME, null);
-//    }
-
-
     // Get entry by ID
     public String getDataById(String id) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -135,6 +133,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             item.putString(COL_PHONE_NUMBER, cursor.getString(1));
             item.putString(COL_DETAIL, cursor.getString(2));
             item.putString(COL_REPORTER, cursor.getString(3));
+
+            // Fetch contact name associated with the number
+            ContactInfo contactInfo =  Utils.getContactInfo(context, cursor.getString(1));
+            item.putString(COL_NAME, contactInfo.name);
+            item.putString(COL_PHOTO_URI, contactInfo.photoUri);
+
             results.pushMap(item);
         }
         cursor.close(); // Always close the cursor to avoid memory leaks
@@ -157,6 +161,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public Integer deleteData(String id) {
         SQLiteDatabase db = this.getWritableDatabase();
         return db.delete(TABLE_NAME, "ID = ?", new String[]{id});
+    }
+
+    public boolean isPhoneNumberExists(String phoneNumber) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT 1 FROM "+ TABLE_NAME +" WHERE " + COL_PHONE_NUMBER + " = ?", new String[]{phoneNumber});
+        boolean exists = cursor.moveToFirst();
+        cursor.close();
+        return exists;
     }
 }
 

@@ -1,23 +1,49 @@
 import React from 'react';
 import { Modal, View, Text, Switch, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'; 
+import Icon from 'react-native-vector-icons/FontAwesome';
 
-import * as utils from "../utils"
+interface ProfileModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onLogout: () => void;
+  title: string;
+}
 
-const ProfileScreen: React.FC<any> = ({navigation}) => {
+const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, onLogout, title }) => {
+
+  // Handle logout action
+  const handleLogout = () => {
+    // Add your logout logic here, e.g., clear tokens, navigate to login screen, etc.
+    Alert.alert("Logged out", "You have successfully logged out.");
+  };
+
+  // Handle close action
+  const handleClose = () => {
+    // Add your close logic here, e.g., navigate back or close modal
+    Alert.alert("Closed", "Profile screen closed.");
+  };
+
   return (
+    <Modal
+      animationType="slide"
+      transparent={false}
+      visible={visible}
+      onRequestClose={onClose} // For Android back button support
+      >
       <View style={styles.container}>
         <View style={styles.header}>
           <Image 
-            source={require("../assets/banner-image.png")}
+            source={{uri: 'your-banner-image-url'}}
             style={styles.bannerImage} 
-            resizeMode="cover" 
           />
-          {/* <Image 
+          <Image 
             source={{uri: 'your-profile-image-url'}}
             style={styles.profileImage} 
-          /> */}
-          <MaterialCommunityIcons name="account" size={80} color="#aaa" style={styles.profileImage}  />
+          />
+          {/* Close Button */}
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Icon name="times" size={25} color="#000" />
+          </TouchableOpacity>
           </View>
 
         <View style={styles.infoContainer}>
@@ -57,13 +83,17 @@ const ProfileScreen: React.FC<any> = ({navigation}) => {
               <Text style={styles.qrText}>View QR Code</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.logoutButton} onPress={async()=>{
-            await utils.saveObject('login', null)
+
+           {/* Logout Button */}
+          <TouchableOpacity style={styles.logoutButton} onPress={()=>{
+            onLogout();
+            onClose();
           }}>
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
       </View>
+    </Modal>
   );
 };
 
@@ -73,7 +103,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   header: {
-    // backgroundColor: 'blue',
+    backgroundColor: '#009688',
     paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
@@ -88,7 +118,6 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     position: 'absolute',
     bottom: -40,
-    backgroundColor: '#f5f5f5'
   },
   closeButton: {
     position: 'absolute',
@@ -144,4 +173,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen;
+export default ProfileModal;

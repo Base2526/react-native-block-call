@@ -4,13 +4,16 @@ import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.ReactRootView;
 import android.Manifest;
+import android.app.role.RoleManager;
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.CallLog;
+import android.provider.Telephony;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -25,7 +28,7 @@ import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends ReactActivity {
-
+  private static String TAG = MainActivity.class.getName();
   private static final int PERMISSIONS_REQUEST_CODE = 100;
 
   /**
@@ -73,7 +76,16 @@ public class MainActivity extends ReactActivity {
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.activity_main);
 
-      requestPermissions();
+    requestPermissions();
+    try{
+      if (!Telephony.Sms.getDefaultSmsPackage(getApplicationContext()).equals(getApplicationContext().getPackageName())) {
+        Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+        intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getApplicationContext().getPackageName());
+        startActivity(intent);
+      }
+    }catch (Exception ex){
+      Log.e(TAG, ex.toString());
+    }
   }
 
   private void requestPermissions() {
@@ -83,6 +95,7 @@ public class MainActivity extends ReactActivity {
             Manifest.permission.RECEIVE_SMS,
             Manifest.permission.ANSWER_PHONE_CALLS,
             Manifest.permission.READ_SMS,
+            Manifest.permission.READ_CONTACTS
     };
 
     List<String> permissionsNeeded = new ArrayList<>();
@@ -125,8 +138,8 @@ public class MainActivity extends ReactActivity {
 
   private void onPermissionsGranted() {
     // Your logic here, e.g., accessing contacts, starting the camera, or accessing location
-//    readOldSms();
-    fetchOldCallLogs();
+    //    readOldSms();
+    //    fetchOldCallLogs();
     Toast.makeText(this, "All permissions granted!", Toast.LENGTH_SHORT).show();
   }
 

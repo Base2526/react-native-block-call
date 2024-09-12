@@ -1,9 +1,13 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 
-const SettingsScreen: React.FC = () => {
+const AboutScreen: React.FC = () => {
   return (
-    <View style={styles.container}><Text>SettingsScreen</Text></View>
+    <View style={styles.container}>
+      <View>
+        <Text>AboutScreen</Text>
+      </View>
+    </View>
   );
 };
 
@@ -15,4 +19,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default SettingsScreen;
+export default AboutScreen;

@@ -1,21 +1,21 @@
-package com.yourprojectname.newarchitecture;
+package com.yourprojectname.receiver;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Telephony;
 import android.telecom.TelecomManager;
 import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import androidx.core.app.ActivityCompat;
+
+import com.yourprojectname.newarchitecture.DatabaseHelper;
+
 import org.json.JSONException;
-import org.json.JSONObject;
 
 public class PhoneCallReceiver extends BroadcastReceiver {
 
