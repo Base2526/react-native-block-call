@@ -1,4 +1,4 @@
-package com.yourprojectname.receiver;
+package com.blockcall.receiver;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

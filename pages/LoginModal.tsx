@@ -81,10 +81,10 @@ const LoginModal: React.FC<LoginScreenProps> = ({ onLogin, closeLoginModal, visi
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.buttonGoogle}>
-              <Text style={styles.buttonText}>Sign up with Google</Text>
+              <Text style={styles.buttonTextGoogle}>Sign up with Google</Text>
             </TouchableOpacity>
 
-            <Text style={{fontSize:15}}>OR</Text>
+            <Text style={{fontSize:15, fontWeight: '500'}}>OR</Text>
 
             {/* Username Input */}
             <TextInput
@@ -93,10 +93,12 @@ const LoginModal: React.FC<LoginScreenProps> = ({ onLogin, closeLoginModal, visi
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
+              onFocus={()=>{  setUsernameError(''); }}
+              onBlur={()=>{ console.log("onBlur") }}
             />
-            {usernameError ? <Text style={styles.errorText}>{usernameError}</Text> : null}
+            {usernameError ? <View style={{width: '100%'}}><Text style={styles.errorText}>{usernameError}</Text></View>: null}
 
-            {/* Password Input */}
+            {/* Password Input */} 
             <TextInput
               style={styles.input}
               placeholder="Password"
@@ -104,8 +106,9 @@ const LoginModal: React.FC<LoginScreenProps> = ({ onLogin, closeLoginModal, visi
               onChangeText={setPassword}
               secureTextEntry={true}
               autoCapitalize="none"
+              onFocus={()=>{  setPasswordError(''); }}
             />
-            {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+            {passwordError ? <View style={{width: '100%'}}><Text style={styles.errorText}>{passwordError}</Text></View> : null}
 
             {/* Login Button */}
             <TouchableOpacity style={styles.buttonLogin} onPress={handleLogin} disabled={loading}>
@@ -199,19 +202,26 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 20,
     width: '100%',
+    color: '#fff',
     alignItems: 'center',
   },
   buttonLogin: {
-    backgroundColor: '#00A500',
+    backgroundColor: '#ee2b29',
     paddingVertical: 12,
     borderRadius: 8,
     width: '100%',
     alignItems: 'center',
     marginTop: 10,
   },
+  buttonTextGoogle:{
+    fontSize: 16,
+    color: '#000',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
   buttonText: {
     fontSize: 16,
-    color: '#000000',
+    color: '#fff',
     textAlign: 'center',
     fontWeight: 'bold',
   },
@@ -236,6 +246,7 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 12,
     marginBottom: 10,
+    fontWeight: '500',
   },
 
 //   buttonLogin: {

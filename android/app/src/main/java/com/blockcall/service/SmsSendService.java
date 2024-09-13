@@ -1,4 +1,4 @@
-package com.yourprojectname.service;
+package com.blockcall.service;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -16,12 +16,12 @@ public class SmsSendService extends IntentService {
 
     // TODO: Rename actions, choose action names that describe tasks that this
     // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
-    private static final String ACTION_FOO = "com.yourprojectname.service.action.FOO";
-    private static final String ACTION_BAZ = "com.yourprojectname.service.action.BAZ";
+    private static final String ACTION_FOO = "com.blockcall.service.action.FOO";
+    private static final String ACTION_BAZ = "com.blockcall.service.action.BAZ";
 
     // TODO: Rename parameters
-    private static final String EXTRA_PARAM1 = "com.yourprojectname.service.extra.PARAM1";
-    private static final String EXTRA_PARAM2 = "com.yourprojectname.service.extra.PARAM2";
+    private static final String EXTRA_PARAM1 = "com.blockcall.service.extra.PARAM1";
+    private static final String EXTRA_PARAM2 = "com.blockcall.service.extra.PARAM2";
 
     public SmsSendService() {
         super("SmsSendService");

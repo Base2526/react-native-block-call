@@ -1,4 +1,4 @@
-package com.yourprojectname.receiver;
+package com.blockcall.receiver;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
@@ -13,7 +13,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import androidx.core.app.ActivityCompat;
 
-import com.yourprojectname.newarchitecture.DatabaseHelper;
+import com.blockcall.newarchitecture.DatabaseHelper;
 
 import org.json.JSONException;
 

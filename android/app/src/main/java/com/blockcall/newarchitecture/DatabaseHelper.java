@@ -1,4 +1,4 @@
-package com.yourprojectname.newarchitecture;
+package com.blockcall.newarchitecture;
 
 import android.content.ContentValues;
 import android.content.Context;

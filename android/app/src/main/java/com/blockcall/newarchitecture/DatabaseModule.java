@@ -1,4 +1,4 @@
-package com.yourprojectname.newarchitecture;
+package com.blockcall.newarchitecture;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;

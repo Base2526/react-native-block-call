@@ -33,7 +33,7 @@ const SMSDetailModal: React.FC<any> = ({ route, navigation }) => {
   useEffect(()=>{
     console.log("SMSDetailModal : ", thread_id)
     try {
-      if(!thread_id){
+      if(thread_id){
         DatabaseHelper.fetchSmsMessagesByThreadId(thread_id).then((response: any) => {
           setDatas(response);
         })

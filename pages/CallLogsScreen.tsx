@@ -79,7 +79,7 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                 closeMenu();
               }} title="Block" />
             <Divider />
-            <Menu.Item onPress={() => {openLoginModal(true); closeMenu();}} title="Report" />
+            {/* <Menu.Item onPress={() => {openLoginModal(true); closeMenu();}} title="Report" /> */}
           </Menu>
           <View style={styles.timeAndIconContainer}>
             {renderItemCall(itemCall.type)}

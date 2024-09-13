@@ -1,4 +1,4 @@
-package com.yourprojectname.newarchitecture;
+package com.blockcall.newarchitecture;
 
 public class SmsItem {
     private String address;

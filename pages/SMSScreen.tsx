@@ -72,11 +72,11 @@ const SMSScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                 // openModal();
                 closeMenu();
               }} title="Block" />
-            <Divider />
+            {/* <Divider />
             <Menu.Item 
               onPress={() => {
                 closeMenu();
-              }} title="Report" />
+              }} title="Report" /> */}
           </Menu>
           <Text style={styles.time}>{utils.getDate(Number(lastMessage.date))}</Text>
           {_.isEmpty(callCount) ? <></> : <View style={styles.callCountContainer}><Text style={styles.callCount}>{callCount.toString()}</Text></View>}

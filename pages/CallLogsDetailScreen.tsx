@@ -1,5 +1,5 @@
-import React, { useState, useLayoutEffect } from 'react';
-import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, NativeModules } from 'react-native';
+import React, { useState } from 'react';
+import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, NativeModules, Linking } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; 
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
@@ -84,20 +84,10 @@ const CallLogsDetailScreen: React.FC<any> = ({ route, navigation }) => {
 
   const fetchSmsThreadIdLogs = async (number: string) => {
     try {
-      // dispatch(clearCallLogs());
-
-      const response = await DatabaseHelper.fetchSmsThreadIdLogs("+66959429918");
-      // console.log("fetchSmsThreadIdLogs:", response);
-
+      const response = await DatabaseHelper.fetchSmsThreadIdLogs(number);
       if (response.status) {
-        // dispatch(addMultipleCallLogs(response.data));
-
-        console.log("fetchSmsThreadIdLogs :", response.data[0])
-
         navigation.navigate('SMSDetail', { thread_id: response.data[0], number }); 
       } else {
-        console.error("fetchSmsThreadIdLogs:", response.message);
-
         navigation.navigate('SMSDetail', { thread_id: undefined, number }); 
       }
     } catch (error) {
@@ -121,12 +111,13 @@ const CallLogsDetailScreen: React.FC<any> = ({ route, navigation }) => {
           <Text style={styles.subHeaderText}>No results found</Text>
         </View>
         <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={()=>{
+            Linking.openURL(`tel:${callLogDetail.number}`);
+          }}>
             <Text style={styles.actionText}>Call</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} onPress={async()=>{
-            const response = fetchSmsThreadIdLogs(callLogDetail.number);
-            console.log("response :", response)
+            fetchSmsThreadIdLogs(callLogDetail.number);
           }}>
             <Text style={styles.actionText}>SMS</Text>
           </TouchableOpacity>

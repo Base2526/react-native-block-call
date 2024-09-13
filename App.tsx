@@ -105,30 +105,30 @@ export const AppNavigator: React.FC = () => {
           {/* <View style={{ flex: 1 }}> */}
             <Tab.Navigator>
               <Tab.Screen 
-                name={`Call Logs (${callLogs.length})`}
+                name={`Call Logs`}
                 component={CallLogsStackScreen} 
                 options={({ route }) => ({
-                  tabBarBadge: 3,
+                  // tabBarBadge: 0,
                   tabBarIcon: ({ color, size }) => (
                     <Icon name="odnoklassniki" color={color} size={size} />
                   ),
                 })}  
               />
               <Tab.Screen 
-                name={`SMS (${smsLogs.length})`}
+                name={`SMS`}
                 component={SMSStackScreen} 
                 options={({ route }) => ({
-                  tabBarBadge: 2,
+                  // tabBarBadge: 0,
                   tabBarIcon: ({ color, size }) => (
                     <Icon name="envelope-open-o" color={color} size={size} />
                   ),
                 })}  
               />
               <Tab.Screen 
-                name="My Blocklist" 
+                name="Blocklist" 
                 component={MyBlocklistStackScreen} 
                 options={({ route }) => ({
-                  tabBarBadge: 9,
+                  // tabBarBadge: 9,
                   tabBarIcon: ({ color, size }) => (
                     <Icon name="lock" color={color} size={size} />
                   ),
