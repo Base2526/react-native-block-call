@@ -4,6 +4,8 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'; 
 import { Divider } from 'react-native-paper';
 
+import { useMyContext } from './App'; 
+
 interface MenuProps {
   isOpen: boolean;
   onClose: () => void;
@@ -12,6 +14,8 @@ interface MenuProps {
 
 const DrawerContent: React.FC<MenuProps> = ({ isOpen, onClose, navigation }) => {
   if (!isOpen) return null;
+
+  const { openLoginModal } = useMyContext();
 
   const userProfile = {
     name: 'John Doe',
@@ -24,43 +28,47 @@ const DrawerContent: React.FC<MenuProps> = ({ isOpen, onClose, navigation }) => 
       <View style={styles.overlay}>
         <TouchableWithoutFeedback>
           <View style={styles.drawerContent}>
-            <TouchableOpacity
-              style={styles.drawerItem}
-              onPress={() => {
-                onClose();
-                navigation.navigate("Profile");
-              }}>
-              <View style={styles.profileSection}>
-                <View style={styles.avatarContainer}>
-                  {
-                    userProfile.image
-                    ? <Image source={{ uri: userProfile.image }} />
-                    : <MaterialCommunityIcons name="account" size={40} color="#aaa" />
-                  }
+            {/* <>
+              <TouchableOpacity
+                style={styles.drawerItem}
+                onPress={() => {
+                  onClose();
+                  navigation.navigate("Profile");
+                }}>
+                <View style={styles.profileSection}>
+                  <View style={styles.avatarContainer}>
+                    {
+                      userProfile.image
+                      ? <Image source={{ uri: userProfile.image }} />
+                      : <MaterialCommunityIcons name="account" size={40} color="#aaa" />
+                    }
+                  </View>
+                  <View style={styles.profileInfo}>
+                    <Text style={styles.profileName}>{userProfile.name}</Text>
+                    <Text style={styles.profileEmail}>{userProfile.email}</Text>
+                  </View>
                 </View>
-                <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{userProfile.name}</Text>
-                  <Text style={styles.profileEmail}>{userProfile.email}</Text>
-                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.drawerItem}
+                onPress={() =>{ 
+                  navigation.navigate('Settings');
+                  onClose();
+                }}>
+                <Icon name="cogs" size={20} style={{padding: 10}} />
+                <Text style={styles.drawerItemText}>Settings</Text>
+              </TouchableOpacity>
+              <Divider />
+            </> */}
+
+          
+
+            <TouchableOpacity style={styles.buttonLogin} onPress={()=>openLoginModal()}  >
+              <View style={styles.buttonContent}>
+                <Text style={styles.buttonText}>Login</Text>
               </View>
             </TouchableOpacity>
-
-            {/* <TouchableOpacity
-              style={styles.drawerItem}
-              onPress={() => navigation.navigate('Home')}>
-              <Icon name="home" size={20} />
-              <Text style={styles.drawerItemText}>Home</Text>
-            </TouchableOpacity> */}
-            <TouchableOpacity
-              style={styles.drawerItem}
-              onPress={() =>{ 
-                navigation.navigate('Settings');
-                onClose();
-              }}>
-              <Icon name="cogs" size={20} style={{padding: 10}} />
-              <Text style={styles.drawerItemText}>Settings</Text>
-            </TouchableOpacity>
-            <Divider />
+            
             <TouchableOpacity 
               style={styles.drawerItem}
               onPress={() =>{
@@ -69,6 +77,16 @@ const DrawerContent: React.FC<MenuProps> = ({ isOpen, onClose, navigation }) => 
               }}>
               <Icon name="question" size={20} style={{padding: 10}} />
               <Text style={styles.drawerItemText}>Help & Send Feedback</Text>
+            </TouchableOpacity>
+            <Divider />
+            <TouchableOpacity 
+              style={styles.drawerItem}
+              onPress={() =>{
+                // navigation.navigate('HelpSendFeedback');
+                // onClose();
+              }}>
+              <Icon name="user-shield" size={20} style={{padding: 10}} />
+              <Text style={styles.drawerItemText}>Private policy</Text>
             </TouchableOpacity>
             <Divider />
             <TouchableOpacity 
@@ -154,6 +172,25 @@ const styles = StyleSheet.create({
     borderRadius: 25, // Ensure container is circular
     backgroundColor: '#f0f0f0', // Background color if no image
     marginRight: 15,
+  },
+
+  buttonLogin: {
+    backgroundColor: '#00A500',
+    paddingVertical: 12,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    fontSize: 16,
+    color: '#000000',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 

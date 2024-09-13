@@ -17,6 +17,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
+import android.provider.Telephony;
+import android.telephony.SmsManager;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -26,8 +28,10 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class DatabaseModule extends ReactContextBaseJavaModule {
     private final DatabaseHelper databaseHelper;
@@ -40,15 +44,6 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
     @Override
     public String getName() {
         return "DatabaseHelper";
-    }
-
-    private WritableMap createResponse(Boolean status, double executionTime, WritableArray data, String message) {
-        WritableMap response = Arguments.createMap();
-        response.putBoolean("status", status);
-        response.putDouble("executionTime", executionTime  / (1000 * 60) ); // convert to minute
-        response.putArray("data", data);
-        response.putString("message", message);
-        return response;
     }
 
     @ReactMethod
@@ -109,11 +104,11 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 //            promise.resolve(cursor);
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            promise.resolve(createResponse(true, executionTime, cursor, ""));
+            promise.resolve( Utils.createResponse(true, executionTime, cursor, ""));
         } catch (Exception e) {
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            promise.reject("LOGS_ERROR", createResponse(false, executionTime, null, e.getMessage()));
+            promise.reject("LOGS_ERROR", Utils.createResponse(false, executionTime, null, e.getMessage()));
         }
     }
 
@@ -190,59 +185,14 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 
                 long endTime = System.currentTimeMillis();
                 long executionTime = endTime - startTime;
-                promise.resolve(createResponse(true, executionTime, groupedCallList, ""));
+                promise.resolve(Utils.createResponse(true, executionTime, groupedCallList, ""));
             }
         } catch (Exception e) {
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            promise.reject("LOGS_ERROR", createResponse(false, executionTime, null, e.getMessage()));
+            promise.reject("LOGS_ERROR", Utils.createResponse(false, executionTime, null, e.getMessage()));
         }
     }
-
-//    public void fetchCallLogs2(Promise promise){
-//        long startTime = System.currentTimeMillis();
-//        try {
-//            Uri callLogUri = Uri.parse("content://call_log/calls");
-//            ContentResolver contentResolver = getReactApplicationContext().getContentResolver();
-//            Cursor cursor = contentResolver.query(callLogUri, null, null, null, null);
-//            if (cursor != null) {
-//                WritableArray callList = Arguments.createArray();
-//                while (cursor.moveToNext()) {
-//                    String id = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls._ID));
-//                    String number = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.NUMBER));
-//                    String type = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE));
-//                    String date = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.DATE));
-//
-//                    // Fetch contact name associated with the number
-//                    ContactInfo contactInfo = Utils.getContactInfo(getReactApplicationContext(), number);
-//
-//                    // Process the call log data here
-//                    Log.d("OldCallLog", "Number: " + number + ", Type: " + type + ", Date: " + date);
-//
-//                    // Create a WritableMap for each CallItem
-//                    WritableMap callItem = Arguments.createMap();
-//                    callItem.putString("id", id);
-//                    callItem.putString("name", contactInfo.name); // Add the contact name to the call item
-//                    callItem.putString("photoUri", contactInfo.photoUri); // Add the contact photo URI
-//                    callItem.putString("number", number);
-//                    callItem.putString("type", type);
-//                    callItem.putString("date", date);
-//
-//                    // Add the WritableMap to the WritableArray
-//                    callList.pushMap(callItem);
-//                }
-//                cursor.close();
-//
-//                long endTime = System.currentTimeMillis();
-//                long executionTime = endTime - startTime;
-//                promise.resolve(createResponse(true, executionTime, callList, ""));
-//            }
-//        } catch (Exception e) {
-//            long endTime = System.currentTimeMillis();
-//            long executionTime = endTime - startTime;
-//            promise.reject("LOGS_ERROR", createResponse(false, executionTime, null, e.getMessage()));
-//        }
-//    }
 
     @ReactMethod
     public void fetchSmsLogs(Promise promise) {
@@ -271,7 +221,7 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
                     // Create a WritableMap for each smsItem
                     WritableMap smsItem = Arguments.createMap();
                     smsItem.putString("id", id);
-                    smsItem.putString("number", address);
+                    smsItem.putString("address", address);
                     smsItem.putString("body", body);
                     smsItem.putString("date", date);
                     smsItem.putString("name", contactInfo.name); // Add contact name
@@ -304,20 +254,84 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 
                 long endTime = System.currentTimeMillis();
                 long executionTime = endTime - startTime;
-                promise.resolve(createResponse(true, executionTime, groupedSmsList, ""));
+                promise.resolve(Utils.createResponse(true, executionTime, groupedSmsList, ""));
             } else {
                 long endTime = System.currentTimeMillis();
                 long executionTime = endTime - startTime;
 
-                promise.reject("LOGS_ERROR", createResponse(false, executionTime, null, "Failed to retrieve SMS logs."));
+                promise.reject("LOGS_ERROR", Utils.createResponse(false, executionTime, null, "Failed to retrieve SMS logs."));
             }
         } catch (Exception e) {
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            promise.reject("LOGS_ERROR", createResponse(false, executionTime, null, e.getMessage()));
+            promise.reject("LOGS_ERROR", Utils.createResponse(false, executionTime, null, e.getMessage()));
         }
     }
 
+    @ReactMethod
+    public void fetchSmsThreadIdLogs(String number, Promise promise) {
+        long startTime = System.currentTimeMillis();
+        try {
+            Log.d("fetchSmsThreadIdLogs", "start :" + number );
+            Uri smsUri = Uri.parse("content://sms/");
+            String[] projection = new String[] { "_id", "address", "body", "date" }; // Specify the columns you want to retrieve
+            String selection = "address = ?";
+            String[] selectionArgs = new String[] { number }; // Replace with the address you want to filter by
+
+            Cursor cursor = getReactApplicationContext().getContentResolver().query(smsUri, null, selection, selectionArgs, null);
+
+            WritableArray threadIds = Arguments.createArray();
+            if (cursor != null) {
+                try {
+                    while (cursor.moveToNext()) {
+//                        String id = cursor.getString(cursor.getColumnIndex("_id"));
+//                        String address = cursor.getString(cursor.getColumnIndex("address"));
+//                        String body = cursor.getString(cursor.getColumnIndex("body"));
+//                        long date = cursor.getLong(cursor.getColumnIndex("date"));
+
+                        String id =  cursor.getString(cursor.getColumnIndexOrThrow("_id"));
+                        String thread_id = cursor.getString(cursor.getColumnIndexOrThrow("thread_id"));
+
+                        // Process the SMS data
+//                        Log.d("fetchSmsThreadIdLogs", "thread_id: " + thread_id );
+
+//                        threadId.add(thread_id);
+
+                        threadIds.pushString(thread_id);
+                    }
+
+                    WritableArray newThreadIds = Utils.removeDuplicates(threadIds);
+
+                    long endTime = System.currentTimeMillis();
+                    long executionTime = endTime - startTime;
+                    promise.resolve(Utils.createResponse(true, executionTime, newThreadIds, ""));
+                } catch (Exception e) {
+                    long endTime = System.currentTimeMillis();
+                    long executionTime = endTime - startTime;
+                    promise.reject("LOGS_ERROR", Utils.createResponse(false, executionTime, null, e.getMessage()));
+                } finally {
+                    cursor.close();
+                }
+            }
+
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.resolve(Utils.createResponse(true, executionTime, threadIds, ""));
+        } catch (Exception e) {
+            Log.e("fetchSmsThreadIdLogs",  e.getMessage() );
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.reject("LOGS_ERROR", Utils.createResponse(false, executionTime, null, e.getMessage()));
+        }
+    }
+
+    /*
+    Telephony.Sms.TYPE
+        Telephony.Sms.MESSAGE_TYPE_INBOX – Represents an incoming SMS message. 
+        Telephony.Sms.MESSAGE_TYPE_SENT – Represents an SMS message that has been sent.
+        Telephony.Sms.MESSAGE_TYPE_DRAFT – Represents an SMS draft.
+        Telephony.Sms.MESSAGE_TYPE_OUTBOX – Represents an SMS message that is in the outbox, waiting to be sent.
+    */
     @ReactMethod
     public void fetchSmsMessagesByThreadId(String threadId, Promise promise){
         try {
@@ -331,12 +345,34 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
                 smsMap.putDouble("date", sms.getDate());
                 smsMap.putInt("type", sms.getType());
 
+                // Fetch contact name associated with the number
+                ContactInfo contactInfo =  Utils.getContactInfo(getReactApplicationContext(), sms.getAddress());
+
+                smsMap.putString("name", contactInfo.name); // Add contact name
+                smsMap.putString("photoUri", contactInfo.photoUri); // Add contact photo URI
+
                 smsMap.putInt("read", sms.isRead());
                 smsMap.putString("status", sms.getStatus());
 
                 writableArray.pushMap(smsMap);
             }
             promise.resolve(writableArray);
+        } catch (Exception e) {
+            promise.reject("ERROR", e);
+        }
+    }
+
+    @ReactMethod
+    public void sendTextSMS(String phoneNumber, String message, Promise promise){
+        long startTime = System.currentTimeMillis();
+
+        SmsManager smsManager = SmsManager.getDefault();
+        try {
+            smsManager.sendTextMessage(phoneNumber, null, message, null, null);
+
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.resolve(Utils.createResponse(true, executionTime,  null, ""));
         } catch (Exception e) {
             promise.reject("ERROR", e);
         }

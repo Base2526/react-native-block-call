@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode, createContext, useContext } from 'react';
 import { SafeAreaView, View, NativeModules } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -21,8 +21,43 @@ import { addMultipleCallLogs, clearCallLogs } from './redux/slices/calllogSlice'
 import { addMultipleSmsLogs, clearSmsLogs } from './redux/slices/smslogSlice'
 import client from './apollo/apolloClient';
 
+import LoginModal from "./pages/LoginModal"
+
 const Tab = createBottomTabNavigator();
 const { DatabaseHelper } = NativeModules;
+
+interface MyContextType {
+  openLoginModal: (open: boolean) => void;
+}
+const MyContext = createContext<MyContextType | undefined>(undefined);
+
+export const useMyContext = () => {
+  const context = useContext(MyContext);
+  if (context === undefined) {
+    throw new Error('useMyContext must be used within a MyProvider');
+  }
+  return context;
+};
+
+export const MyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [visible, setVisible] = useState(false)
+  const openLoginModal = () => {
+    console.log("openLoginModal")
+    setVisible(true)
+  };
+
+  return (
+    <MyContext.Provider value={{ openLoginModal }} >
+      {children}
+      {
+        visible && <LoginModal 
+                    onLogin={()=>{ console.log("onLogin") }} 
+                    closeLoginModal={()=>{setVisible(false)}}
+                    visible={visible}/>
+      }
+    </MyContext.Provider>
+  );
+};
 
 export const AppNavigator: React.FC = () => {
   const count = useSelector((state: RootState) => state.counter.value);
@@ -96,9 +131,10 @@ export const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer>
       <LoadingDialog visible={loading} />
-      {isLoggedIn ? ( 
-        <SafeAreaView style={{ flex: 1 }}>
-          <View style={{ flex: 1 }}>
+      {/* {isLoggedIn ? (  */}
+        <MyProvider>
+        {/* <SafeAreaView style={{ flex: 1 }}> */}
+          {/* <View style={{ flex: 1 }}> */}
             <Tab.Navigator>
               <Tab.Screen 
                 name={`Call Logs (${callLogs.length})`}
@@ -131,11 +167,13 @@ export const AppNavigator: React.FC = () => {
                 })}  
               />
             </Tab.Navigator>
-          </View>
-        </SafeAreaView>
-        ) : (
-          <LoginScreen onLogin={handleLogin} />
-        )}
+          {/* </View> */}
+        {/* </SafeAreaView> */}
+        </MyProvider>
+        {/* ) : (
+           <LoginScreen onLogin={handleLogin} />
+         )}
+        */}
     </NavigationContainer>
   );
 };

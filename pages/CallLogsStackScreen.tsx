@@ -15,6 +15,7 @@ import HelpSendFeedbackScreen from "./HelpSendFeedbackScreen";
 import AboutScreen from './AboutScreen';
 import ProfileScreen from "./ProfileScreen";
 import DrawerContent from "../DrawerContent";
+import SMSDetailScreen from './SMSDetailScreen';
 
 type CallLogsStackScreenProps = {
     navigation: NavigationProp<any>;
@@ -33,7 +34,8 @@ const CallLogsStackScreen: React.FC<CallLogsStackScreenProps> = ({ navigation, r
             routeName === 'Search' || 
             routeName === 'Settings' ||
             routeName === 'HelpSendFeedback' || 
-            routeName === 'About'
+            routeName === 'About' ||
+            routeName === 'SMSDetail'
           ) {
         navigation.setOptions({ tabBarStyle: { display: 'none' } });
       } else {
@@ -65,7 +67,8 @@ const CallLogsStackScreen: React.FC<CallLogsStackScreenProps> = ({ navigation, r
                      routeName === 'Search' || 
                      routeName === 'Settings' ||
                      routeName === 'HelpSendFeedback' || 
-                     routeName === 'About' ? false : true
+                     routeName === 'About' ||
+                     routeName === 'SMSDetail' ? false : true
       });
     }, [navigation, route]);
   
@@ -91,6 +94,12 @@ const CallLogsStackScreen: React.FC<CallLogsStackScreenProps> = ({ navigation, r
               headerTitle: '', 
             }}
           />
+          <CallLogsStack.Screen
+            name="SMSDetail"
+            component={SMSDetailScreen}
+            options={{  
+              headerTitle: 'SMS', 
+            }}/>
           <CallLogsStack.Screen
             name="Search"
             component={SearchScreen}

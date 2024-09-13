@@ -84,7 +84,7 @@ const SMSStackScreen: React.FC<SMSStackScreenProps> = ({ navigation, route }) =>
             name="SMSDetail"
             component={SMSDetailScreen}
             options={{  
-              headerTitle: 'SMSDetail', 
+              headerTitle: 'SMS', 
             }}/>
           <SMSStack.Screen
             name="Settings"

@@ -1,14 +1,22 @@
 import React, { useState, useLayoutEffect } from 'react';
-import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, NativeModules } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; 
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import { CallLog } from "../redux/interface";
 import * as utils from "../utils";
 
-const CallLogsDetailScreen: React.FC<any> = ({ route }) => {
+import BlockReasonModal from './BlockReasonModal'; 
+
+const { DatabaseHelper } = NativeModules;
+
+const CallLogsDetailScreen: React.FC<any> = ({ route, navigation }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const callLogs = useSelector((state: RootState) => state.callLog.callLogs);
+
+  const [isModalVisible, setModalVisible] = useState(false);
+  const openModal = () => setModalVisible(true);
+  const closeModal = () => setModalVisible(false);
 
   let callLogDetail: CallLog | undefined = callLogs.find(callLog => callLog.number === route.params.itemId);
 
@@ -74,6 +82,29 @@ const CallLogsDetailScreen: React.FC<any> = ({ route }) => {
     }
   }
 
+  const fetchSmsThreadIdLogs = async (number: string) => {
+    try {
+      // dispatch(clearCallLogs());
+
+      const response = await DatabaseHelper.fetchSmsThreadIdLogs("+66959429918");
+      // console.log("fetchSmsThreadIdLogs:", response);
+
+      if (response.status) {
+        // dispatch(addMultipleCallLogs(response.data));
+
+        console.log("fetchSmsThreadIdLogs :", response.data[0])
+
+        navigation.navigate('SMSDetail', { thread_id: response.data[0], number }); 
+      } else {
+        console.error("fetchSmsThreadIdLogs:", response.message);
+
+        navigation.navigate('SMSDetail', { thread_id: undefined, number }); 
+      }
+    } catch (error) {
+      console.error("Error fetchSmsThreadIdLogs :", error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -93,15 +124,18 @@ const CallLogsDetailScreen: React.FC<any> = ({ route }) => {
           <TouchableOpacity style={styles.actionButton}>
             <Text style={styles.actionText}>Call</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={async()=>{
+            const response = fetchSmsThreadIdLogs(callLogDetail.number);
+            console.log("response :", response)
+          }}>
             <Text style={styles.actionText}>SMS</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={()=>{  openModal() }}>
             <Text style={styles.actionText}>Block</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          {/* <TouchableOpacity style={styles.actionButton}>
             <Text style={styles.actionText}>Report</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
         <View style={styles.callHistoryContainer}>
           <ScrollView
@@ -121,9 +155,11 @@ const CallLogsDetailScreen: React.FC<any> = ({ route }) => {
             ))}
           </ScrollView>
           {callLogDetail.callLogs.length > 2 && (
-            <TouchableOpacity onPress={handleExpand}>
-              <Text style={styles.moreButton}>{isExpanded ? 'Show Less' : 'More'}</Text>
-            </TouchableOpacity>
+            <View style={{width: '100%', alignItems: 'center'}}>
+              <TouchableOpacity onPress={handleExpand} style={{ width: 80, alignItems: 'center', padding: 5 }}>
+                <Text style={styles.moreButton}>{isExpanded ? 'Show Less' : 'More'}</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
         <TextInput
@@ -134,6 +170,9 @@ const CallLogsDetailScreen: React.FC<any> = ({ route }) => {
           <Text style={styles.searchText}>Search more info for this number</Text>
         </TouchableOpacity>
       </ScrollView>
+      {
+        isModalVisible && <BlockReasonModal visible={isModalVisible} onClose={closeModal} />
+      }
     </View>
   );
 };
@@ -212,8 +251,8 @@ const styles = StyleSheet.create({
   },
   moreButton: {
     color: '#007bff',
-    textAlign: 'center',
-    marginTop: 8,
+    // textAlign: 'center',
+    // marginTop: 8,
   },
   searchButton: {
     alignItems: 'center',

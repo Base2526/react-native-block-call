@@ -1,78 +1,184 @@
-import React, { useEffect, useState }from 'react';
-import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity, Dimensions, NativeModules } from 'react-native';
+import React, { useEffect, useState, ReactNode }from 'react';
+import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity, Dimensions, NativeModules, TextStyle } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
+import { Chat, MessageType, defaultTheme, TextMessage } from '@flyerhq/react-native-chat-ui'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
+
+import { ItemSms } from "../redux/interface"
 const { DatabaseHelper } = NativeModules;
 
+// For the testing purposes, you should probably use https://github.com/uuidjs/uuid
+const uuidv4 = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.floor(Math.random() * 16)
+    const v = c === 'x' ? r : (r % 4) + 8
+    return v.toString(16)
+  })
+}
 
-const SMSDetailModal: React.FC<any> = ({ route }) => {
-  const { thread_id } = route.params;
-  const [datas, setDatas] = useState([]);
+const SMSDetailModal: React.FC<any> = ({ route, navigation }) => {
+  const { thread_id, number } = route.params;
+  const [datas, setDatas] = useState<ItemSms[]>([]);
+
+  const [messages, setMessages] = useState<MessageType.Any[]>([])
+  const user = { id: '06c33e8b-e835-4736-80f4-63f44b66666c', firstName: "A1" }
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerTitle: number, // You can set any dynamic title here
+    });
+  }, [navigation, number]);
 
   useEffect(()=>{
+    console.log("SMSDetailModal : ", thread_id)
     try {
-      DatabaseHelper.fetchSmsMessagesByThreadId(thread_id).then((response: any) => {
-        console.log("fetchSmsMessagesByThreadId response @1:", response)
-
-        setDatas(response);
-      })
-      .catch((error: any) =>{
-        console.log("fetchSmsMessagesByThreadId response @2:",error)
-      } );
+      if(!thread_id){
+        DatabaseHelper.fetchSmsMessagesByThreadId(thread_id).then((response: any) => {
+          setDatas(response);
+        })
+        .catch((error: any) =>{
+          console.error("response @:", error)
+        } );
+      }
+      
     } catch (error) {
       console.error("Error fetching SMS messages: ", error);
     }
-
   }, [])
 
+  useEffect(()=>{
+      if(datas){
+        let newMessages: MessageType.Any[] = [];
+        datas.map((item : ItemSms)=>{
+          console.log(">> ", item)
+          switch(Number(item.type)){
+            // recevier
+            case 1:{
+              let author = { id: item.id, firstName: item.address }
+              const textMessage: MessageType.Text = {
+                author,
+                createdAt: Date.now(),
+                id: uuidv4(),
+                text: item.body,
+                type: 'text',
+                // status
+              }
+              // "status": "-1"
+              newMessages = [...newMessages, textMessage];
+              break;
+            }
+
+            // sender
+            case 2:{
+              const textMessage: MessageType.Text = {
+                author: user,
+                createdAt: Date.now(),
+                id: uuidv4(),
+                text: item.body,
+                type: 'text',
+                status: 'seen' // 'delivered' | 'error' | 'seen' | 'sending' | 'sent'
+              }
+              newMessages = [...newMessages, textMessage];
+              break;
+            }
+
+            default:
+              break;
+          }
+        })
+        setMessages(newMessages)
+      }
+  }, [datas])
+
+  const addMessage = (message: MessageType.Any) => {
+    setMessages([message, ...messages])
+  }
+
+  const handleSendPress = (message: MessageType.PartialText) => {
+    const textMessage: MessageType.Text = {
+      author: user,
+      createdAt: Date.now(),
+      id: uuidv4(),
+      text: message.text,
+      type: 'text',
+      status: 'sending'
+    }
+    addMessage(textMessage)
+  }
+
+  const renderBubble = ({
+    child,
+    message,
+    nextMessageInGroup,
+  }: {
+    child: ReactNode
+    message: MessageType.Any
+    nextMessageInGroup: boolean
+  }) => {
+
+    // const isCurrentUser = user.id === message.author.id;
+    // const textStyle: TextStyle = {
+    //   color: isCurrentUser ? 'blue' : 'black', // Customize text color based on the user
+    // };
+    // // Clone the child element to inject custom text style
+    // const modifiedChild = React.cloneElement(child as React.ReactElement<any>, {
+    //   // enableAnimation: true,
+    // });
+    // // console.log("message.author.id ", message.author.id, child, modifiedChild)
+
+    if ( user.id === message.author.id ){
+      return (
+        <View
+          style={{
+            backgroundColor: '#000',
+            borderBottomRightRadius: 0,
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            borderBottomLeftRadius: 20
+          }}
+        >{child}</View>
+      )
+    }
+    return (
+      <View
+        style={{
+          backgroundColor: '#eee',
+          borderBottomRightRadius: 20,
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
+          borderBottomLeftRadius: 0
+        }}
+      >{child}</View>
+    )
+  }
+
+  const customDateHeaderText = (dateTime: number) => {
+    const date = new Date(dateTime);
+  // return date.toDateString(); // Example implementation
+    return `${date.toDateString()}`
+  }
+
   return (
-      <View style={styles.container}>
-        <View style={styles.imageContainer}>
-          <Text style={styles.text}>{ JSON.stringify(datas) }</Text>
-        </View>
-      </View>
+    <SafeAreaProvider>
+      <Chat
+        theme={{
+          ...defaultTheme,
+          colors: { ...defaultTheme.colors, 
+                    inputBackground: '#eee', 
+                    inputText: '#888888'
+                  },
+        }}
+        customDateHeaderText={customDateHeaderText}
+        renderBubble={renderBubble}
+        messages={messages}
+        onSendPress={handleSendPress}
+        user={user}
+        showUserAvatars={true}
+        showUserNames={true}
+      />
+    </SafeAreaProvider>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    zIndex: 1,
-  },
-  searchContainer: {
-    marginTop: 60, // Adjust this margin to avoid overlapping with the close button
-    marginBottom: 40,
-  },
-  searchInput: {
-    height: 50,
-    backgroundColor: '#F0F0F5',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    fontSize: 16,
-  },
-  imageContainer: {
-    // alignItems: 'center',
-    // justifyContent: 'center',
-    flex: 1,
-  },
-  image: {
-    width: Dimensions.get('window').width * 0.5,
-    height: Dimensions.get('window').width * 0.5,
-    resizeMode: 'contain',
-    marginBottom: 20,
-  },
-  text: {
-    fontSize: 18,
-    color: '#A3A3A3',
-    textAlign: 'center',
-  },
-});
 
 export default SMSDetailModal;

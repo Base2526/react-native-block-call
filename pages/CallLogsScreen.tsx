@@ -8,9 +8,13 @@ import { RootState, AppDispatch } from '../redux/store';
 import { CallLog, ItemCall } from "../redux/interface";
 import { getDate } from "../utils";
 
-import BlockReasonModal from './BlockReasonModal'; // Import the modal component
+import BlockReasonModal from './BlockReasonModal'; 
+
+import { useMyContext } from '../App'; // Adjust the path accordingly
 
 const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+  const { openLoginModal } = useMyContext();
+
   const [refreshing, setRefreshing] = useState(false);
   const [visibleMenuId, setVisibleMenuId] = useState<string | null>(null);
 
@@ -20,9 +24,9 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const dispatch: AppDispatch = useDispatch();
   const callLogs = useSelector((state: RootState) => state.callLog.callLogs);
 
-  const [isModalVisible, setModalVisible] = useState(false);
-  const openModal = () => setModalVisible(true);
-  const closeModal = () => setModalVisible(false);
+  const [isBlockReasonModalVisible, setBlockReasonModalVisible] = useState(false);
+  const openBlockReasonModal = () => setBlockReasonModalVisible(true);
+  const closeBlockReasonModal = () => setBlockReasonModalVisible(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -73,11 +77,11 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           >
             <Menu.Item 
               onPress={() =>{
-                openModal();
+                openBlockReasonModal();
                 closeMenu();
               }} title="Block" />
             <Divider />
-            <Menu.Item onPress={() => {}} title="Report" />
+            <Menu.Item onPress={() => {openLoginModal(true); closeMenu();}} title="Report" />
           </Menu>
           <View style={styles.timeAndIconContainer}>
             {renderItemCall(itemCall.type)}
@@ -102,8 +106,11 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       />
       {
-        isModalVisible && <BlockReasonModal visible={isModalVisible} onClose={closeModal} />
+        isBlockReasonModalVisible && <BlockReasonModal visible={isBlockReasonModalVisible} onClose={closeBlockReasonModal} />
       }
+      {/* {
+         <LoginModal onLogin={ ()=>{ console.log('onLogin') }} />
+      } */}
     </>
   );
 };
