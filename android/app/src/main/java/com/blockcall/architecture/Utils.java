@@ -1,4 +1,4 @@
-package com.blockcall.newarchitecture;
+package com.blockcall.architecture;
 
 import android.content.ContentResolver;
 import android.content.Context;

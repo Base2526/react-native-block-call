@@ -13,7 +13,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import androidx.core.app.ActivityCompat;
 
-import com.blockcall.newarchitecture.DatabaseHelper;
+import com.blockcall.architecture.DatabaseHelper;
 
 import org.json.JSONException;
 

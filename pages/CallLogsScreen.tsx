@@ -78,7 +78,7 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                 openBlockReasonModal();
                 closeMenu();
               }} title="Block" />
-            <Divider />
+            {/* <Divider /> */}
             {/* <Menu.Item onPress={() => {openLoginModal(true); closeMenu();}} title="Report" /> */}
           </Menu>
           <View style={styles.timeAndIconContainer}>

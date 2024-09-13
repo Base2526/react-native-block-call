@@ -1,4 +1,4 @@
-package com.blockcall.newarchitecture;
+package com.blockcall.architecture;
 
 
 import com.facebook.react.ReactPackage;

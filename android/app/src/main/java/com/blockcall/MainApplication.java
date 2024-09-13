@@ -9,13 +9,13 @@ import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.config.ReactFeatureFlags;
 import com.facebook.soloader.SoLoader;
-import com.blockcall.newarchitecture.DatabasePackage;
-import com.blockcall.newarchitecture.MainApplicationReactNativeHost;
+import com.blockcall.architecture.DatabasePackage;
+import com.blockcall.architecture.MainApplicationReactNativeHost;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 // react-native-splash-screen >= 0.3.1
-import org.devio.rn.splashscreen.SplashScreenReactPackage;
+
 
 public class MainApplication extends Application implements ReactApplication {
 
