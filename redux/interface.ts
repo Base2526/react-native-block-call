@@ -18,15 +18,15 @@ export interface CallLog {
 
 export interface ItemSms {
     id: string;
-    number: string;
-    body: string;
-    date: string;
-    name?: string; 
-    photoUri?: string; 
-    type: string;
-    read: number;
-    status: string;
-    thread_id: string;
+    address: string; // Phone number
+    body: string;   // SMS body content
+    date: string;   // Date of the SMS
+    name: string;   // Contact name
+    photoUri?: string; // Contact photo URI (optional)
+    type: string;   // Message type (e.g., sent, received)
+    read: number;   // Read status (1 for read, 0 for unread)
+    status: string; // Delivery status of the message
+    thread_id?: string; // SMS thread ID
 }
 
 export interface SmsLog {

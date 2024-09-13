@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode, createContext, useContext } from 'react';
 import { SafeAreaView, View, NativeModules } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -21,8 +21,11 @@ import { addMultipleCallLogs, clearCallLogs } from './redux/slices/calllogSlice'
 import { addMultipleSmsLogs, clearSmsLogs } from './redux/slices/smslogSlice'
 import client from './apollo/apolloClient';
 
+import { MyProvider } from './MyProvider'
+
 const Tab = createBottomTabNavigator();
 const { DatabaseHelper } = NativeModules;
+
 
 export const AppNavigator: React.FC = () => {
   const count = useSelector((state: RootState) => state.counter.value);
@@ -96,9 +99,10 @@ export const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer>
       <LoadingDialog visible={loading} />
-      {isLoggedIn ? ( 
-        <SafeAreaView style={{ flex: 1 }}>
-          <View style={{ flex: 1 }}>
+      {/* {isLoggedIn ? (  */}
+        <MyProvider>
+        {/* <SafeAreaView style={{ flex: 1 }}> */}
+          {/* <View style={{ flex: 1 }}> */}
             <Tab.Navigator>
               <Tab.Screen 
                 name={`Call Logs (${callLogs.length})`}
@@ -131,11 +135,13 @@ export const AppNavigator: React.FC = () => {
                 })}  
               />
             </Tab.Navigator>
-          </View>
-        </SafeAreaView>
-        ) : (
-          <LoginScreen onLogin={handleLogin} />
-        )}
+          {/* </View> */}
+        {/* </SafeAreaView> */}
+        </MyProvider>
+        {/* ) : (
+           <LoginScreen onLogin={handleLogin} />
+         )}
+        */}
     </NavigationContainer>
   );
 };

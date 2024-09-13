@@ -36,11 +36,12 @@ const SMSScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     const lastMessage: ItemSms = findLastUpdatedSmsLog(item.messages);
     const callCount = _.filter(item.messages, item => item.read === 0).length;
 
-    console.log("renderItem :", lastMessage)
     return (
       <TouchableOpacity
         style={styles.itemContainer}
-        onPress={() => { navigation.navigate('SMSDetail', { thread_id: lastMessage.thread_id }); }}>
+        onPress={() => { 
+          navigation.navigate('SMSDetail', { thread_id: lastMessage.thread_id, number: lastMessage.address }); 
+        }}>
         <View style={styles.avatarContainer}>
           {
             lastMessage.photoUri 
@@ -62,7 +63,7 @@ const SMSScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             visible={visibleMenuId === item.address}
             onDismiss={closeMenu}
             anchor={
-              <TouchableOpacity onPress={() => openMenu(item.address)}>
+              <TouchableOpacity style={{}} onPress={() => openMenu(item.address)}>
                 <Icon name="dots-vertical" size={24} color="#555" />
               </TouchableOpacity>
             }>
@@ -101,8 +102,9 @@ const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'center', // Center items vertically
-    padding: 10,
-    // backgroundColor: '#ccc',
+    // padding: 10,
+    margin:10,
+    // backgroundColor: 'yellow',
   },
   avatarContainer: {
     width: 60,
@@ -132,8 +134,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   timeContainer: {
-    alignItems: 'flex-end', 
-    justifyContent: 'center',
+    // alignItems: 'flex-end', 
+    // justifyContent: 'center',
+    // backgroundColor: 'blue',
   },
   time: {
     color: '#888',
