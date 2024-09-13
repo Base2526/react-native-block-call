@@ -7,10 +7,8 @@ import { Menu, Divider } from 'react-native-paper';
 import { RootState, AppDispatch } from '../redux/store';
 import { CallLog, ItemCall } from "../redux/interface";
 import { getDate } from "../utils";
-
 import BlockReasonModal from './BlockReasonModal'; 
-
-import { useMyContext } from '../App'; // Adjust the path accordingly
+import { useMyContext } from '../MyProvider'; 
 
 const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { openLoginModal } = useMyContext();

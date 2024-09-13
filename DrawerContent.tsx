@@ -1,10 +1,9 @@
 import { View, TouchableOpacity, Text, StyleSheet, Image, TouchableWithoutFeedback } from 'react-native';
 import { NavigationProp } from '@react-navigation/core'; 
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'; 
 import { Divider } from 'react-native-paper';
 
-import { useMyContext } from './App'; 
+import { useMyContext } from './MyProvider'; 
 
 interface MenuProps {
   isOpen: boolean;
