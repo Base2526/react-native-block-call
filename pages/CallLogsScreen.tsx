@@ -57,7 +57,7 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         <View style={styles.avatarContainer}>
           {itemCall.photoUri
             ? <Image source={{ uri: itemCall.photoUri }} style={styles.image} />
-            : <Icon name="account" size={30}  />}
+            : <Icon name="account" size={30} />}
         </View>
         <View style={styles.detailsContainer}>
           <Text style={styles.name}>{itemCall.name}</Text>
@@ -74,12 +74,10 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             }
           >
             <Menu.Item 
-              onPress={() =>{
+              onPress={() => {
                 openBlockReasonModal();
                 closeMenu();
               }} title="Block" />
-            {/* <Divider /> */}
-            {/* <Menu.Item onPress={() => {openLoginModal(true); closeMenu();}} title="Report" /> */}
           </Menu>
           <View style={styles.timeAndIconContainer}>
             {renderItemCall(itemCall.type)}
@@ -92,23 +90,27 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   return (
     <>
-      <FlatList
-        data={callLogs}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.number}
-        initialNumToRender={10}
-        windowSize={5}
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        ItemSeparatorComponent={() => <Divider />}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      />
-      {
-        isBlockReasonModalVisible && <BlockReasonModal visible={isBlockReasonModalVisible} onClose={closeBlockReasonModal} />
-      }
-      {/* {
-         <LoginModal onLogin={ ()=>{ console.log('onLogin') }} />
-      } */}
+      {callLogs.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Icon name="file-document-outline" size={100} color="#ccc" />
+          <Text style={styles.emptyText}>No call logs available</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={callLogs}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.number}
+          initialNumToRender={10}
+          windowSize={5}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          ItemSeparatorComponent={() => <Divider />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        />
+      )}
+      {isBlockReasonModalVisible && (
+        <BlockReasonModal visible={isBlockReasonModalVisible} onClose={closeBlockReasonModal} />
+      )}
     </>
   );
 };
@@ -124,8 +126,8 @@ const styles = StyleSheet.create({
     height: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 35, // Half of width/height for a circular shape
-    backgroundColor: '#eee', // Background color if no image
+    borderRadius: 35,
+    backgroundColor: '#eee',
     marginRight: 15,
   },
   image: {
@@ -156,6 +158,16 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: 5,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 18,
+    color: '#ccc',
+    marginTop: 10,
   },
 });
 

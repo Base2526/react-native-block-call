@@ -55,7 +55,7 @@ const MyBlocklistScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         <View style={styles.avatarContainer}>
           {itemCall.photoUri
             ? <Image source={{ uri: itemCall.photoUri }} style={styles.image} />
-            : <Icon name="account" size={30}  />}
+            : <Icon name="account" size={30} />}
         </View>
         <View style={styles.detailsContainer}>
           <Text style={styles.name}>{itemCall.name}</Text>
@@ -72,7 +72,7 @@ const MyBlocklistScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             }
           >
             <Menu.Item 
-              onPress={() =>{
+              onPress={() => {
                 openModal();
                 closeMenu();
               }} title="Unblock" />
@@ -87,26 +87,49 @@ const MyBlocklistScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   }, [visibleMenuId]);
 
   return (
-    <>
-      <FlatList
-        data={callLogs}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.number}
-        initialNumToRender={10}
-        windowSize={5}
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        ItemSeparatorComponent={() => <Divider />}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      />
+    <View style={styles.container}>
+      {
+        callLogs.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Icon name="file-document-outline" size={80} color="#ccc" />
+            <Text style={styles.emptyText}>No Call Logs Found</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={callLogs}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.number}
+            initialNumToRender={10}
+            windowSize={5}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            ItemSeparatorComponent={() => <Divider />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          />
+        )
+      }
       {
         isModalVisible && <BlockReasonModal visible={isModalVisible} onClose={closeModal} />
       }
-    </>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 18,
+    color: '#ccc',
+    marginTop: 10,
+  },
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -117,8 +140,8 @@ const styles = StyleSheet.create({
     height: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 35, // Half of width/height for a circular shape
-    backgroundColor: '#eee', // Background color if no image
+    borderRadius: 35, 
+    backgroundColor: '#eee',
     marginRight: 15,
   },
   image: {

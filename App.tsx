@@ -110,7 +110,7 @@ export const AppNavigator: React.FC = () => {
                 options={({ route }) => ({
                   // tabBarBadge: 0,
                   tabBarIcon: ({ color, size }) => (
-                    <Icon name="odnoklassniki" color={color} size={size} />
+                    <Icon name="phone" color={color} size={size} />
                   ),
                 })}  
               />
