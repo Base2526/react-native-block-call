@@ -22,72 +22,55 @@ type MyBlocklistStackScreenProps = {
   };
 
 const MyBlocklistStackScreen: React.FC<MyBlocklistStackScreenProps> = ({ navigation, route }) => {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    useLayoutEffect(() => {
-      const routeName = getFocusedRouteNameFromRoute(route);
-      
-      // // Hide tab bar for certain routes
-      if ( routeName === 'Profile' ||
-           routeName === "SMSDetail" ||
-           routeName === "Settings" ||
-           routeName === 'HelpSendFeedback' ||  
-           routeName === 'About'
-       ) {
-        navigation.setOptions({ tabBarStyle: { display: 'none' } });
-      } else {
-        navigation.setOptions({ tabBarStyle: { display: 'flex' } });
-      }
-  
-      // console.log("HomeStackScreen:", routeName);
-      navigation.setOptions({
-        headerLeft: () => (
-          <TouchableOpacity onPress={() => { setIsMenuOpen(!isMenuOpen) }} style={styles.menuButton}>
-            <Icon name="bars" size={24} />
-          </TouchableOpacity>
-        ),
-        headerRight: () => (
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TabIconWithMenu 
-              iconName="ellipsis-v"
-              menuItems={[
-                { label: 'Clear all', onPress: () => console.log('Item 1 pressed') },
-                // { label: 'Item 2', onPress: () => console.log('Item 2 pressed') },
-              ]}/>
-          </View>
-        ),
-        headerShown:  routeName === 'Profile' ||
-                      routeName === "SMSDetail" || 
-                      routeName === "Settings" ||
-                      routeName === 'HelpSendFeedback' ||  
-                      routeName ==='About' ? false : true, // hide/show header parent
-      });
-    }, [navigation, route]);
-  
-    return (
-      <>
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  useLayoutEffect(() => {
+    const routeName = getFocusedRouteNameFromRoute(route);
+    
+    // // Hide tab bar for certain routes
+    if ( routeName === 'Profile' ||
+          routeName === "SMSDetail" ||
+          routeName === "Settings" ||
+          routeName === 'HelpSendFeedback' ||  
+          routeName === 'About'
+      ) {
+      navigation.setOptions({ tabBarStyle: { display: 'none' } });
+    } else {
+      navigation.setOptions({ tabBarStyle: { display: 'flex' } });
+    }
+
+    navigation.setOptions({ headerShown: false });
+
+  }, [navigation, route]);
+
+  const setMenuOpen = () =>{
+    setIsMenuOpen(!isMenuOpen)
+  }
+
+  return (
+    <>
       <MyBlocklistStack.Navigator
-        // screenOptions={{
-        //   headerShown: false, // hide screen all child
-        // }}
-      
-      >
+        screenOptions={{
+          headerShown: false, 
+        }}>
         <MyBlocklistStack.Screen
-          name="SMS"
-          component={MyBlocklist} 
+          name="Blocklist"
+          // component={MyBlocklist} 
+          children={(props) => <MyBlocklist {...props} setMenuOpen={()=>setMenuOpen()} />}
           options={{
-            headerShown: false, // hide screen child
-            // headerTitle: 'Home ^ ',
+            headerShown: true, 
           }}/>
         <MyBlocklistStack.Screen
           name="Settings"
           component={SettingsScreen}
           options={{  
+            headerShown: true, 
             headerTitle: 'Settings', 
           }}/>
           <MyBlocklistStack.Screen
             name="HelpSendFeedback"
             component={HelpSendFeedbackScreen}
             options={{  
+              headerShown: true, 
               headerTitle: 'Help & SendFeedback', 
             }}
           />
@@ -95,27 +78,23 @@ const MyBlocklistStackScreen: React.FC<MyBlocklistStackScreenProps> = ({ navigat
             name="About"
             component={AboutScreen}
             options={{  
+              headerShown: true, 
               headerTitle: 'About', 
             }}
           />
-           <MyBlocklistStack.Screen
+          <MyBlocklistStack.Screen
             name="Profile"
             component={ProfileScreen}
             options={{  
+              headerShown: true, 
               headerTitle: 'Profile', 
             }}
           />
       </MyBlocklistStack.Navigator>
       <DrawerContent isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} navigation={navigation} />
-      </>
-    )
-  }
-
-const styles = StyleSheet.create({
-    menuButton: {
-      marginLeft: 10,
-    },
-});
+    </>
+  )
+}
 
 export default MyBlocklistStackScreen;
   

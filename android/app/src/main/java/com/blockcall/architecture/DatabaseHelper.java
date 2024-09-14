@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableArray;
@@ -13,23 +14,27 @@ import com.facebook.react.bridge.WritableMap;
 import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
+    private static String TAG = DatabaseHelper.class.getName();
+    private static final int DATABASE_VERSION = 2; // Increment this when upgrading
+
     private static Context context = null;
     private static final String DATABASE_NAME = "mydatabase.db";
     private static final String TABLE_NAME = "BLOCK";
+
     private static final String COL_ID = "ID";
     private static final String COL_PHONE_NUMBER = "PHONE_NUMBER";
     private static final String COL_DETAIL = "DETAIL";
     private static final String COL_REPORTER = "REPORTER";
     private static final String COL_STATUS = "STATUS";
-    private static final String COL_TYPE   = "TYPE";
     private static final String COL_CREATE_AT = "CREATE_AT";
     private static final String COL_UPDATE_AT = "UPDATE_AT";
+    private static final String COL_TYPE   = "TYPE";
 
     private static final String COL_NAME = "NAME";
     private static final String COL_PHOTO_URI = "PHOTO_URI";
 
     public DatabaseHelper(Context context) {
-        super(context, DATABASE_NAME, null, 1);
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
         this.context = context;
     }
 
@@ -40,6 +45,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                         COL_PHONE_NUMBER +" TEXT, "+
                                         COL_DETAIL +" TEXT, "+
                                         COL_REPORTER +" TEXT, "+
+                                        COL_TYPE +" TEXT, "+
                                         COL_STATUS +" INTEGER DEFAULT 1, "+
                                         COL_CREATE_AT +" DATE DEFAULT CURRENT_TIMESTAMP, " +
                                         COL_UPDATE_AT +" DATE DEFAULT CURRENT_TIMESTAMP)");
@@ -47,22 +53,31 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
-        onCreate(db);
+        //  db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        //  onCreate(db);
+
+        // Log.i(TAG, "oldVersion :" + oldVersion + ", newVersion :" + newVersion);
+
+        if (newVersion  == 2) {
+            // Add a new column 'age' to the existing table
+            db.execSQL("ALTER TABLE "+ TABLE_NAME +" ADD COLUMN " + COL_TYPE + " TEXT ");
+        }
     }
 
     // Add a new entry
-    public boolean addData(DataItem i) {
+    public boolean addBlockNumberData(DataItem i) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(COL_PHONE_NUMBER, i.getPhoneNumber());
+        contentValues.put(COL_TYPE, i.getType());
         contentValues.put(COL_DETAIL, i.getDetail());
         contentValues.put(COL_REPORTER, i.getReporter());
+
         long result = db.insert(TABLE_NAME, null, contentValues);
         return result != -1; // returns true if insert was successful
     }
 
-    public boolean addDatas(List<DataItem> datas) {
+    public boolean addBlockNumberDatas(List<DataItem> datas) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.beginTransaction(); // Start transaction
         try {
@@ -84,7 +99,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // Get entry by ID
-    public String getDataById(String id) {
+    public String getBlockNumberDataById(String id) {
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE ID = ?", new String[]{id});
 
@@ -103,36 +118,49 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // Get entry by phone number
-    public String getDataByPhoneNumber(String phoneNumber) {
+    public WritableArray getDataByPhoneNumber(String phoneNumber) {
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE PHONE_NUMBER = ?", new String[]{phoneNumber});
 
+        WritableArray results = Arguments.createArray();
         if (cursor != null) {
             if (cursor.moveToFirst()) {
-                String result = "{ \""+ COL_ID +"\": \"" + cursor.getString(0)
-                                + "\", \""+ COL_PHONE_NUMBER +"\": \"" + cursor.getString(1) + "\" "
-                                + "\", \""+ COL_DETAIL +"\": \"" + cursor.getString(2) + "\" "
-                                + "\", \""+ COL_REPORTER +"\": \"" + cursor.getString(3) + "\" }";
-                cursor.close();
-                return result; // return JSON string
+//                String result = "{ \""+ COL_ID +"\": \"" + cursor.getString(0)
+//                                + "\", \""+ COL_PHONE_NUMBER +"\": \"" + cursor.getString(1) + "\" "
+//                                + "\", \""+ COL_DETAIL +"\": \"" + cursor.getString(2) + "\" "
+//                                + "\", \""+ COL_REPORTER +"\": \"" + cursor.getString(3) + "\" }";
+//                cursor.close();
+//                return result; // return JSON string
+
+                WritableMap item = Arguments.createMap();
+
+                item.putString(COL_ID, String.valueOf(cursor.getInt(0))); // Assuming ID is an integer
+                item.putString(COL_PHONE_NUMBER, cursor.getString(1));
+                item.putString(COL_DETAIL, cursor.getString(2));
+
+                results.pushMap(item);
             }
             cursor.close();
         }
-        return "{}"; // return empty JSON if not found
+        return results; // return empty JSON if not found
     }
 
     // Get all entries
-    public WritableArray getAllData() {
+    public WritableArray getBlockNumberAllData() {
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME, null);
         WritableArray results = Arguments.createArray();
 
         while (cursor.moveToNext()) {
+//            Log.i(TAG, cursor.toString());
             WritableMap item = Arguments.createMap();
             item.putString(COL_ID, String.valueOf(cursor.getInt(0))); // Assuming ID is an integer
             item.putString(COL_PHONE_NUMBER, cursor.getString(1));
             item.putString(COL_DETAIL, cursor.getString(2));
             item.putString(COL_REPORTER, cursor.getString(3));
+
+            item.putString(COL_CREATE_AT, cursor.getString(5));
+            item.putString(COL_UPDATE_AT, cursor.getString(6));
 
             // Fetch contact name associated with the number
             ContactInfo contactInfo =  Utils.getContactInfo(context, cursor.getString(1));
@@ -146,7 +174,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // Update an entry
-    public boolean updateData(DataItem i) {
+    public boolean updateBlockNumberData(DataItem i) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
 //        contentValues.put(COL_1, i.getId());
@@ -158,9 +186,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // Delete an entry
-    public Integer deleteData(String id) {
+    public Integer deleteBlockNumberData(String id) {
         SQLiteDatabase db = this.getWritableDatabase();
         return db.delete(TABLE_NAME, "ID = ?", new String[]{id});
+    }
+
+    // Delete all data
+    public Integer deleteAllBlockNumberData() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete(TABLE_NAME, null, null);
     }
 
     public boolean isPhoneNumberExists(String phoneNumber) {

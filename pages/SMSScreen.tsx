@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useLayoutEffect} from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, RefreshControl, FlatList } from 'react-native';
 import _ from "lodash";
 import { useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; 
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 
 import { RootState } from '../redux/store';
 import { SmsLog, ItemSms } from "../redux/interface"
 import * as utils from "../utils"
+import TabIconWithMenu from "../TabIconWithMenu"
+
+type SMSProps = {
+  navigation: any;
+  route: any;
+  setMenuOpen: () => void; // Define the function prop
+};
 
 const findLastUpdatedSmsLog = (logs: ItemSms[]): ItemSms => {
   return logs.reduce((latest, current) => {
@@ -14,7 +22,48 @@ const findLastUpdatedSmsLog = (logs: ItemSms[]): ItemSms => {
   });
 };
 
-const SMSScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+const SMSScreen: React.FC<SMSProps> = ({ navigation, route, setMenuOpen }) => {
+  useLayoutEffect(() => {
+    const routeName = getFocusedRouteNameFromRoute(route);
+      
+    // Hide tab bar for certain routes
+    if (  routeName === 'Profile' ||
+          routeName === "SMSDetail" || 
+          routeName === 'Settings' ||
+          routeName === 'HelpSendFeedback' ||  
+          routeName === 'Search' ||
+          routeName ==='About') {
+      navigation.setOptions({ tabBarStyle: { display: 'none' } });
+    } else {
+      navigation.setOptions({ tabBarStyle: { display: 'flex' } });
+    }
+
+    console.log("HomeStackScreen:", routeName);
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity onPress={() => { setMenuOpen() }} style={styles.menuButton}>
+          <Icon name="menu" size={24} />
+        </TouchableOpacity>
+      ),
+      headerRight: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity 
+            style={{ padding:5, marginRight: 5 }} 
+            onPress={()=>{ navigation.navigate("Search") }}>
+            <Icon name="magnify" size={25} color="#333" />
+          </TouchableOpacity>
+          <TabIconWithMenu 
+            iconName="dots-vertical"
+            menuItems={[
+              { label: 'Clear all', onPress: () => console.log('Item 1 pressed') },
+            ]}/>
+        </View>
+      ),
+      headerShown: true // hide/show header parent
+    });
+
+  }, [navigation, route]);
+
   const [refreshing, setRefreshing] = useState(false); 
   const [visibleMenuId, setVisibleMenuId] = useState<string | null>(null);
 
@@ -149,6 +198,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#ccc',
     marginTop: 10,
+  },
+  menuButton: {
+    marginLeft: 10,
   },
 });
 

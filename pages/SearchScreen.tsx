@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; 
 
 interface SearchModalProps {
   visible: boolean;
@@ -8,32 +8,25 @@ interface SearchModalProps {
   title: string;
 }
 
-const SearchScreen: React.FC<any> = ({  }) => {
+const SearchScreen: React.FC<SearchModalProps> = ({ visible, onClose, title }) => {
   return (
-      <View style={styles.container}>
-        <View style={styles.searchContainer}>
-          <Icon name="search" size={20} color="#C7C7CD" style={styles.icon} />
-          <TextInput 
-            style={styles.searchInput}
-            placeholder="Search keyword or number"
-            placeholderTextColor="#C7C7CD"
-          />
-        </View>
-        
-        <View style={styles.imageContainer}>
-          {/* Uncomment and set your icon image path here if needed
-          <Image 
-            source={require('./path/to/your/icon.png')}
-            style={styles.image}
-          />
-          // 
-          */}
-          {/* <Icon name="search" size={100} color="#aaa" style={styles.image} /> */}
-          <Text style={styles.text}>
-            Find over millions of numbers here!
-          </Text>
-        </View>
+    <View style={styles.container}>
+      <View style={styles.searchContainer}>
+        <Icon name="magnify" size={20} color="#C7C7CD" style={styles.icon} />
+        <TextInput 
+          style={styles.searchInput}
+          placeholder="Search keyword or number"
+          placeholderTextColor="#C7C7CD"
+        />
       </View>
+
+      <View style={styles.imageContainer}>
+        <Icon name="magnify" size={100} color="#aaa" style={styles.image} />
+        <Text style={styles.text}>
+          Find over millions of numbers here!
+        </Text>
+      </View>
+    </View>
   );
 };
 
@@ -70,20 +63,21 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   imageContainer: {
+    flex: 1, // Make sure it takes the available space
     alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
+    // justifyContent: 'center',
+    marginTop: 20, // Optional: Add margin top if you want spacing from the search container
   },
   image: {
-    width: Dimensions.get('window').width * 0.5,
-    height: Dimensions.get('window').width * 0.5,
+    width: 100, // Set fixed width for the icon
+    height: 100, // Set fixed height for the icon
     resizeMode: 'contain',
-    marginBottom: 20,
   },
   text: {
     fontSize: 18,
     color: '#A3A3A3',
     textAlign: 'center',
+    marginTop: 20, // Add margin top to separate the text from the icon
   },
 });
 

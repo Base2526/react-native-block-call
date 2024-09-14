@@ -1,16 +1,79 @@
-import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, RefreshControl, FlatList } from 'react-native';
+import React, { useEffect, useCallback, useState, useLayoutEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, RefreshControl, FlatList, NativeModules } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; 
 import { useSelector, useDispatch } from 'react-redux';
 import { Menu, Divider } from 'react-native-paper';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import _ from "lodash"
 
 import { RootState, AppDispatch } from '../redux/store';
 import { CallLog, ItemCall } from "../redux/interface";
 import { getDate } from "../utils";
 import BlockReasonModal from './BlockReasonModal'; 
 import { useMyContext } from '../MyProvider'; 
+import TabIconWithMenu from "../TabIconWithMenu"
 
-const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+const { DatabaseHelper } = NativeModules;
+
+type CallLogsProps = {
+  navigation: any;
+  route: any;
+  setMenuOpen: () => void; // Define the function prop
+};
+
+interface BlockNumberItem{
+  ID: string;
+  DETAIL: string;
+  NAME: string;
+  PHONE_NUMBER: string;
+  PHOTO_URI: string | null;
+  REPORTER: string;
+  CREATE_AT: string;
+  UPDATE_AT: string;
+}
+
+const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpen }) => {
+  useLayoutEffect(() => {
+    const routeName = getFocusedRouteNameFromRoute(route);
+    
+    // Hide tab bar for certain routes
+    if (  routeName === "Profile" || 
+          routeName === 'CallLogsDetail' || 
+          routeName === 'Search' || 
+          routeName === 'Settings' ||
+          routeName === 'HelpSendFeedback' || 
+          routeName === 'About' ||
+          routeName === 'SMSDetail'
+        ) {
+      navigation.setOptions({ tabBarStyle: { display: 'none' } });
+    } else {
+      navigation.setOptions({ tabBarStyle: { display: 'flex' } });
+    }
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity onPress={() => { setMenuOpen() }} style={styles.menuButton}>
+          <Icon name="menu" size={24} />
+        </TouchableOpacity>
+      ),
+      headerRight: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity 
+            style={{ padding:5, marginRight: 5 }} 
+            onPress={()=>{ navigation.navigate("Search") }}>
+            <Icon name="magnify" size={25} color="#333" />
+          </TouchableOpacity>
+          <TabIconWithMenu 
+            iconName="dots-vertical"
+            menuItems={[
+              { label: 'Clear all', onPress: () => console.log('Item 1 pressed') },
+              // { label: 'Item 2', onPress: () => console.log('Item 2 pressed') },
+            ]}/>
+        </View>
+      ),
+      headerShown: true, 
+    });
+  }, [navigation, route]);
+
   const { openLoginModal } = useMyContext();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -22,9 +85,38 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const dispatch: AppDispatch = useDispatch();
   const callLogs = useSelector((state: RootState) => state.callLog.callLogs);
 
-  const [isBlockReasonModalVisible, setBlockReasonModalVisible] = useState(false);
-  const openBlockReasonModal = () => setBlockReasonModalVisible(true);
-  const closeBlockReasonModal = () => setBlockReasonModalVisible(false);
+
+  const [blockReasonModal, setBlockReasonModal] = useState<ItemCall | null>(null);
+  const [blockNumber, setBlockNumber] = useState<BlockNumberItem | []>([]);
+
+  const openBlockReasonModal = (item: ItemCall) => {
+    setBlockReasonModal(item);
+  };
+
+  const closeBlockReasonModal = () => {
+    setBlockReasonModal(null);
+  };
+
+  const fetchBlockNumberAll = async()=>{
+    try {
+      const response = await DatabaseHelper.getBlockNumberAllData();
+      console.log("response :", response);
+
+      if(response.status){
+        setBlockNumber(response.data)
+      }
+    } catch (error ) {
+      console.error("useEffect : ", error);
+    }
+  }
+
+  useEffect(()=>{
+    fetchBlockNumberAll()
+  }, [])
+
+  useEffect(()=>{
+    console.log("blockNumber :", blockNumber)
+  }, [blockNumber])
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -47,7 +139,9 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   };
 
   const renderItem = useCallback(({ item }: { item: CallLog }) => {
+  // const renderItem = async ({ item }: { item: CallLog }) => {
     const itemCall: ItemCall = item.callLogs[0];
+
     return (
       <TouchableOpacity
         style={styles.itemContainer}
@@ -55,10 +149,25 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         onLongPress={() => Alert.alert("onLongPress")}
       >
         <View style={styles.avatarContainer}>
-          {itemCall.photoUri
+          {
+          itemCall.photoUri
             ? <Image source={{ uri: itemCall.photoUri }} style={styles.image} />
-            : <Icon name="account" size={30} />}
+            : <Icon name="account" size={30} />
+          }
+          {
+          _.find(blockNumber, (v: BlockNumberItem)=>{
+            console.log(">> ", v.PHONE_NUMBER," | " ,item.number, v.PHONE_NUMBER === item.number)
+            if(v.PHONE_NUMBER === item.number) return true;
+            return false
+          }) 
+            ? <TouchableOpacity style={styles.addIconContainer}>
+                <Icon name="cancel" size={30} color="red" />
+              </TouchableOpacity> 
+            : "" 
+          }
         </View>
+
+
         <View style={styles.detailsContainer}>
           <Text style={styles.name}>{itemCall.name}</Text>
           <Text style={styles.phone}>{item.number}</Text>
@@ -75,7 +184,7 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           >
             <Menu.Item 
               onPress={() => {
-                openBlockReasonModal();
+                openBlockReasonModal(itemCall);
                 closeMenu();
               }} title="Block" />
           </Menu>
@@ -86,13 +195,14 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         </View>
       </TouchableOpacity>
     );
-  }, [visibleMenuId]);
+  // }
+  }, [visibleMenuId, blockNumber]);
 
   return (
     <>
       {callLogs.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Icon name="file-document-outline" size={100} color="#ccc" />
+          <Icon name="phone" size={100} color="#ccc" />
           <Text style={styles.emptyText}>No call logs available</Text>
         </View>
       ) : (
@@ -108,8 +218,8 @@ const CallLogsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         />
       )}
-      {isBlockReasonModalVisible && (
-        <BlockReasonModal visible={isBlockReasonModalVisible} onClose={closeBlockReasonModal} />
+      {blockReasonModal && (
+        <BlockReasonModal visible={true} phoneNumber={blockReasonModal.number} onClose={closeBlockReasonModal} />
       )}
     </>
   );
@@ -129,11 +239,20 @@ const styles = StyleSheet.create({
     borderRadius: 35,
     backgroundColor: '#eee',
     marginRight: 15,
+    position: 'relative', // Add this to allow absolute positioning of the add icon
   },
   image: {
     width: '100%',
     height: '100%',
     borderRadius: 35,
+  },
+  addIconContainer: {
+    position: 'absolute',
+    bottom: -5,
+    right: -5,
+    // backgroundColor: '#007AFF',
+    borderRadius: 15,
+    // padding: 4,
   },
   detailsContainer: {
     flex: 1,
@@ -168,6 +287,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#ccc',
     marginTop: 10,
+  },
+  menuButton: {
+    marginLeft: 10,
   },
 });
 

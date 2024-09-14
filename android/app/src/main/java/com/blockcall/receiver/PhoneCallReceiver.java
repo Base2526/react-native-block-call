@@ -14,6 +14,7 @@ import android.util.Log;
 import androidx.core.app.ActivityCompat;
 
 import com.blockcall.architecture.DatabaseHelper;
+import com.facebook.react.bridge.WritableArray;
 
 import org.json.JSONException;
 
@@ -76,10 +77,10 @@ public class PhoneCallReceiver extends BroadcastReceiver {
     private boolean isBlockedNumber(Context context, String incomingNumber) throws JSONException {
         // Replace this with your logic to check against a list of blocked numbers
 
-        String check = (new DatabaseHelper(context)).getDataByPhoneNumber(incomingNumber);
-        Log.i("PhoneCallReceiver ", check);
+        WritableArray check = (new DatabaseHelper(context)).getDataByPhoneNumber(incomingNumber);
+        Log.i("PhoneCallReceiver ", check.toString());
 
-        if (check.equals("{}")) {
+        if (check == null || check.size() == 0) {
 
         } else {
 //            JSONObject object = new JSONObject(check);

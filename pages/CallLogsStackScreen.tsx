@@ -41,114 +41,92 @@ const CallLogsStackScreen: React.FC<CallLogsStackScreenProps> = ({ navigation, r
       } else {
         navigation.setOptions({ tabBarStyle: { display: 'flex' } });
       }
-      navigation.setOptions({
-        headerLeft: () => (
-          <TouchableOpacity onPress={() => { setIsMenuOpen(!isMenuOpen) }} style={styles.menuButton}>
-            <Icon name="bars" size={24} />
-          </TouchableOpacity>
-        ),
-        headerRight: () => (
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TouchableOpacity 
-              style={{ padding:5, marginRight: 10 }} 
-              onPress={()=>{ navigation.navigate("Search") }}>
-              <Icon name="search" size={25} color="#333" />
-            </TouchableOpacity>
-            <TabIconWithMenu 
-              iconName="ellipsis-v"
-              menuItems={[
-                { label: 'Clear all', onPress: () => console.log('Item 1 pressed') },
-                // { label: 'Item 2', onPress: () => console.log('Item 2 pressed') },
-              ]}/>
-          </View>
-        ),
-        headerShown: routeName === "Profile" || 
-                     routeName === 'CallLogsDetail' || 
-                     routeName === 'Search' || 
-                     routeName === 'Settings' ||
-                     routeName === 'HelpSendFeedback' || 
-                     routeName === 'About' ||
-                     routeName === 'SMSDetail' ? false : true
-      });
+
+      navigation.setOptions({ headerShown: false });
     }, [navigation, route]);
+
+    const setMenuOpen = () =>{
+      setIsMenuOpen(!isMenuOpen)
+    }
   
     return (
       <>
-      <CallLogsStack.Navigator
-        // screenOptions={{
-        //   headerShown: false, // hide screen all child
-        // }}
-        >
-        <CallLogsStack.Screen
-          name="home"
-          component={CallLogsScreen} 
-          options={{
-            headerShown: false, // hide screen child
-            // headerTitle: 'Home ^ ',
+        <CallLogsStack.Navigator
+          screenOptions={{
+            headerShown: false, 
           }}
-        />
-        <CallLogsStack.Screen
-            name="CallLogsDetail"
-            component={CallLogsDetailScreen}
-            options={{  
-              headerTitle: '', 
+          >
+          <CallLogsStack.Screen
+            name="CallLogs"
+            children={(props) => <CallLogsScreen {...props} setMenuOpen={()=>setMenuOpen()} />}
+            options={{
+              headerTitle: 'Call Logs', 
+              headerShown: true, 
             }}
           />
           <CallLogsStack.Screen
-            name="SMSDetail"
-            component={SMSDetailScreen}
-            options={{  
-              headerTitle: 'SMS', 
-            }}/>
-          <CallLogsStack.Screen
-            name="Search"
-            component={SearchScreen}
-            options={{  
-              headerTitle: 'Search', 
-            }}
-          />
-          <CallLogsStack.Screen
-            name="Settings"
-            component={SettingsScreen}
-            options={{  
-              headerTitle: 'Settings', 
-            }}
-          />
-          <CallLogsStack.Screen
-            name="HelpSendFeedback"
-            component={HelpSendFeedbackScreen}
-            options={{  
-              headerTitle: 'Help & SendFeedback', 
-            }}
-          />
-          <CallLogsStack.Screen
-            name="About"
-            component={AboutScreen}
-            options={{  
-              headerTitle: 'About', 
-            }}
-          />
-          <CallLogsStack.Screen
-            name="Profile"
-            component={ProfileScreen}
-            options={{  
-              headerTitle: 'Profile', 
-            }}
-          />
-      </CallLogsStack.Navigator>
-      <DrawerContent 
-        isOpen={isMenuOpen} 
-        onClose={() => setIsMenuOpen(false)} 
-        navigation={navigation} />
+              name="CallLogsDetail"
+              component={CallLogsDetailScreen}
+              options={{  
+                headerTitle: '', 
+                headerShown: true, 
+              }}
+            />
+            <CallLogsStack.Screen
+              name="SMSDetail"
+              component={SMSDetailScreen}
+              options={{  
+                headerTitle: 'SMS', 
+                headerShown: true, 
+              }}/>
+            <CallLogsStack.Screen
+              name="Search"
+              component={SearchScreen}
+              options={{  
+                headerTitle: 'Search', 
+                headerShown: true, 
+              }}
+            />
+            <CallLogsStack.Screen
+              name="Settings"
+              component={SettingsScreen}
+              options={{  
+                headerTitle: 'Settings', 
+                headerShown: true, 
+              }}
+            />
+            <CallLogsStack.Screen
+              name="HelpSendFeedback"
+              component={HelpSendFeedbackScreen}
+              options={{  
+                headerTitle: 'Help & SendFeedback', 
+                headerShown: true, 
+              }}
+            />
+            <CallLogsStack.Screen
+              name="About"
+              component={AboutScreen}
+              options={{  
+                headerTitle: 'About', 
+                headerShown: true, 
+              }}
+            />
+            <CallLogsStack.Screen
+              name="Profile"
+              component={ProfileScreen}
+              options={{  
+                headerTitle: 'Profile', 
+                headerShown: true, 
+              }}
+            />
+        </CallLogsStack.Navigator>
+        <DrawerContent 
+          isOpen={isMenuOpen} 
+          onClose={() => setIsMenuOpen(false)} 
+          navigation={navigation} />
       </>
     )
 }
-
-const styles = StyleSheet.create({
-    menuButton: {
-      marginLeft: 10,
-    },
-});
 
 export default CallLogsStackScreen;
   

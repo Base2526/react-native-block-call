@@ -9,7 +9,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { ApolloProvider } from '@apollo/client';
 import SplashScreen from 'react-native-splash-screen';
 
-import LoginScreen from './pages/LoginScreen';
+import { ToastProvider } from 'react-native-toast-notifications'
+
+// import LoginScreen from './pages/LoginScreen';
 import CallLogsStackScreen from "./pages/CallLogsStackScreen";
 import SMSStackScreen from "./pages/SMSStackScreen";
 import MyBlocklistStackScreen from "./pages/MyBlocklistStackScreen";
@@ -25,7 +27,6 @@ import { MyProvider } from './MyProvider'
 
 const Tab = createBottomTabNavigator();
 const { DatabaseHelper } = NativeModules;
-
 
 export const AppNavigator: React.FC = () => {
   const count = useSelector((state: RootState) => state.counter.value);
@@ -152,6 +153,7 @@ export const App: React.FC = () => {
   }, []);
 
   return (
+    <ToastProvider>
     <ApolloProvider client={client}>
       <Provider store={store}>
         <ProviderPaper>
@@ -159,5 +161,6 @@ export const App: React.FC = () => {
         </ProviderPaper>
       </Provider>
     </ApolloProvider>
+    </ToastProvider>
   );
 };

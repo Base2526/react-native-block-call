@@ -6,6 +6,7 @@ import { NavigationProp } from '@react-navigation/core';
 import { createStackNavigator } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
+
 import TabIconWithMenu from "../TabIconWithMenu";
 import SettingsScreen from "./SettingsScreen";
 import HelpSendFeedbackScreen from "./HelpSendFeedbackScreen";
@@ -41,79 +42,96 @@ const SMSStackScreen: React.FC<SMSStackScreenProps> = ({ navigation, route }) =>
       }
   
       // console.log("HomeStackScreen:", routeName);
-      navigation.setOptions({
-        headerLeft: () => (
-          <TouchableOpacity onPress={() => { setIsMenuOpen(!isMenuOpen) }} style={styles.menuButton}>
-            <Icon name="bars" size={24} />
-          </TouchableOpacity>
-        ),
-        headerRight: () => (
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TouchableOpacity 
-              style={{ padding:5, marginRight: 10 }} 
-              onPress={()=>{ navigation.navigate("Search") }}>
-              <Icon name="search" size={25} color="#333" />
-            </TouchableOpacity>
-            <TabIconWithMenu 
-              iconName="ellipsis-v"
-              menuItems={[
-                { label: 'Clear all', onPress: () => console.log('Item 1 pressed') },
-              ]}/>
-          </View>
-        ),
-        headerShown:  routeName === "Profile" ||
-                      routeName === "SMSDetail" || 
-                      routeName === 'Settings' || 
-                      routeName === 'HelpSendFeedback' ||  
-                      routeName === 'Search' ||
-                      routeName ==='About'? false : true, // hide/show header parent
-      });
+      // navigation.setOptions({
+      //   headerLeft: () => (
+      //     <TouchableOpacity onPress={() => { setIsMenuOpen(!isMenuOpen) }} style={styles.menuButton}>
+      //       <Icon name="bars" size={24} />
+      //     </TouchableOpacity>
+      //   ),
+      //   headerRight: () => (
+      //     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      //       <TouchableOpacity 
+      //         style={{ padding:5, marginRight: 10 }} 
+      //         onPress={()=>{ navigation.navigate("Search") }}>
+      //         <Icon name="search" size={25} color="#333" />
+      //       </TouchableOpacity>
+      //       <TabIconWithMenu 
+      //         iconName="ellipsis-v"
+      //         menuItems={[
+      //           { label: 'Clear all', onPress: () => console.log('Item 1 pressed') },
+      //         ]}/>
+      //     </View>
+      //   ),
+      //   headerShown:  routeName === "Profile" ||
+      //                 routeName === "SMSDetail" || 
+      //                 routeName === 'Settings' || 
+      //                 routeName === 'HelpSendFeedback' ||  
+      //                 routeName === 'Search' ||
+      //                 routeName ==='About'? false : true, // hide/show header parent
+      // });
+
+      navigation.setOptions({ headerShown: false });
   
     }, [navigation, route]);
   
+    const setMenuOpen = () =>{
+      setIsMenuOpen(!isMenuOpen)
+    }
+
     return (
       <>
-        <SMSStack.Navigator>
+        <SMSStack.Navigator
+         screenOptions={{
+          headerShown: false, 
+        }}>
           <SMSStack.Screen
             name="SMS"
-            component={SMSScreen} 
+            // component={SMSScreen} 
+            children={(props) => <SMSScreen {...props} setMenuOpen={()=>setMenuOpen()} />}
             options={{
-              headerShown: false,
+              headerShown: true,
             }}/>
+          
           <SMSStack.Screen
             name="SMSDetail"
             component={SMSDetailScreen}
             options={{  
+              headerShown: true,
               headerTitle: 'SMS', 
             }}/>
           <SMSStack.Screen
             name="Settings"
             component={SettingsScreen}
             options={{  
+              headerShown: true,
               headerTitle: 'Settings', 
             }}/>
           <SMSStack.Screen
             name="HelpSendFeedback"
             component={HelpSendFeedbackScreen}
             options={{  
+              headerShown: true,
               headerTitle: 'Help & SendFeedback', 
             }}/>
           <SMSStack.Screen
             name="About"
             component={AboutScreen}
             options={{  
+              headerShown: true,
               headerTitle: 'About', 
             }}/>
           <SMSStack.Screen
             name="Profile"
             component={ProfileScreen}
             options={{  
+              headerShown: true,
               headerTitle: 'Profile', 
             }}/>
           <SMSStack.Screen
             name="Search"
             component={SearchScreen}
             options={{  
+              headerShown: true,
               headerTitle: 'Search', 
             }}/>
         </SMSStack.Navigator>

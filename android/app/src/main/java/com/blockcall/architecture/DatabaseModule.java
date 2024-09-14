@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 public class DatabaseModule extends ReactContextBaseJavaModule {
+    private static String TAG = DatabaseHelper.class.getName();
     private final DatabaseHelper databaseHelper;
 
     public DatabaseModule(ReactApplicationContext reactContext) {
@@ -36,60 +37,87 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void addData(ReadableMap itemMap, Promise promise) {
-        String phoneNumber = itemMap.getString("phoneNumber");
-        // Check if the phone number already exists in the database
-        if (databaseHelper.isPhoneNumberExists(phoneNumber)) {
-            promise.reject("DUPLICATE_ERROR", "Phone number already exists");
-            return;
-        }
+    public void addBlockNumberData(ReadableMap itemMap, Promise promise) {
+        long startTime = System.currentTimeMillis();
+        try {
+            Log.i(TAG, itemMap.toString());
+            String phoneNumber = itemMap.getString("phoneNumber");
+            // Check if the phone number already exists in the database
+            if (databaseHelper.isPhoneNumberExists(phoneNumber)) {
 
-        DataItem item = new DataItem();
-        item.setPhoneNumber(phoneNumber);
-        item.setDetail(itemMap.getString("detail"));
-        item.setReporter(itemMap.getString("reporter"));
+                long endTime = System.currentTimeMillis();
+                long executionTime = endTime - startTime;
+                promise.reject("DUPLICATE_ERROR", "Phone number already exists");
+                return;
+            }
 
-        boolean success = databaseHelper.addData(item);
-        if (success) {
-            promise.resolve(true);
-        } else {
-            promise.reject("INSERT_ERROR", "Failed to insert data");
+            DataItem item = new DataItem();
+            item.setPhoneNumber(phoneNumber);
+            item.setType(String.valueOf(itemMap.getInt("type")));
+            item.setDetail(itemMap.getString("detail"));
+            item.setReporter(itemMap.getString("reporter"));
+
+            boolean success = databaseHelper.addBlockNumberData(item);
+
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            if (success) {
+                promise.resolve(Utils.createResponse(true, executionTime, null, ""));
+            } else {
+                promise.reject("LOGS_ERROR", "Failed to insert data");
+            }
+        } catch (Exception e) {
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.reject("LOGS_ERROR", e.getMessage());
         }
     }
 
     @ReactMethod
-    public void addDatas(ReadableArray items, Promise promise) {
+    public void addBlockNumberDatas(ReadableArray items, Promise promise) {
         List<DataItem> itemList = new ArrayList<>();
         for (int i = 0; i < items.size(); i++) {
             ReadableMap itemMap = items.getMap(i);
             int id = itemMap.getInt("id");
             String name = itemMap.getString("name");
+            String type = itemMap.getString("type");
             String detail = itemMap.getString("detail");
             String reporter = itemMap.getString("reporter");
-            DataItem item = new DataItem(id, name, detail, reporter);
+            DataItem item = new DataItem(id, name, type, detail, reporter);
             itemList.add(item);
         }
-        boolean success = databaseHelper.addDatas(itemList);
+        boolean success = databaseHelper.addBlockNumberDatas(itemList);
         promise.resolve(success);
     }
 
     @ReactMethod
-    public void getDataById(String id,Promise promise) {
-        String cursor = databaseHelper.getDataById(id);
+    public void getBlockNumberDataById(String id,Promise promise) {
+        String cursor = databaseHelper.getBlockNumberDataById(id);
         promise.resolve(cursor);
     }
 
     @ReactMethod
-    public void getDataByName(String phoneNumber, Promise promise) {
-        String cursor = databaseHelper.getDataByPhoneNumber(phoneNumber);
-        promise.resolve(cursor);
-    }
-
-    @ReactMethod
-    public void getAllData(Promise promise) {
+    public void getBlockNumberDataByName(String phoneNumber, Promise promise) {
         long startTime = System.currentTimeMillis();
         try {
-            WritableArray cursor = databaseHelper.getAllData();
+            WritableArray cursor = databaseHelper.getDataByPhoneNumber(phoneNumber);
+//            promise.resolve(cursor);
+            
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.resolve( Utils.createResponse(true, executionTime, cursor, ""));
+        } catch (Exception e) {
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.reject("LOGS_ERROR", e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void getBlockNumberAllData(Promise promise) {
+        long startTime = System.currentTimeMillis();
+        try {
+            WritableArray cursor = databaseHelper.getBlockNumberAllData();
 //            promise.resolve(cursor);
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
@@ -97,29 +125,57 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
         } catch (Exception e) {
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            promise.reject("LOGS_ERROR", Utils.createResponse(false, executionTime, null, e.getMessage()));
+            promise.reject("LOGS_ERROR", e.getMessage());
         }
     }
 
     @ReactMethod
-    public void updateData(DataItem item, Promise promise) {
-        boolean result = databaseHelper.updateData(item);
+    public void updateBlockNumberData(DataItem item, Promise promise) {
+        boolean result = databaseHelper.updateBlockNumberData(item);
         promise.resolve(result);
     }
 
     @ReactMethod
-    public void deleteData(String id, Promise promise) {
-        Integer result = databaseHelper.deleteData(id);
-        promise.resolve(result);
+    public void deleteBlockNumberData(String id, Promise promise) {
+        long startTime = System.currentTimeMillis();
+        try {
+            Integer result = databaseHelper.deleteBlockNumberData(id);
+//            promise.resolve(result);
+
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.resolve(Utils.createResponse(true, executionTime, null, ""));
+        } catch (Exception e) {
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.reject("LOGS_ERROR", e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void deleteAllBlockNumberData(Promise promise) {
+        long startTime = System.currentTimeMillis();
+        try {
+            Integer result = databaseHelper.deleteAllBlockNumberData();
+//            promise.resolve(result);
+
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.resolve(Utils.createResponse(true, executionTime, null, ""));
+        } catch (Exception e) {
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.reject("LOGS_ERROR", e.getMessage());
+        }
     }
 
     /*
-        CallLog.Calls.TYPE
-        -  CallLog.Calls.INCOMING_TYPE (1): Incoming call.
-        -  CallLog.Calls.OUTGOING_TYPE (2): Outgoing call.
-        -  CallLog.Calls.MISSED_TYPE (3): Missed call.
-        -  CallLog.Calls.REJECTED_TYPE (4): Rejected call.
-        -  CallLog.Calls.BLOCKED_TYPE (5): Blocked call.
+    CallLog.Calls.TYPE
+    -  CallLog.Calls.INCOMING_TYPE (1): Incoming call.
+    -  CallLog.Calls.OUTGOING_TYPE (2): Outgoing call.
+    -  CallLog.Calls.MISSED_TYPE (3): Missed call.
+    -  CallLog.Calls.REJECTED_TYPE (4): Rejected call.
+    -  CallLog.Calls.BLOCKED_TYPE (5): Blocked call.
     * */
     @ReactMethod
     public void fetchCallLogs(Promise promise) {
@@ -179,7 +235,7 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
         } catch (Exception e) {
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            promise.reject("LOGS_ERROR", Utils.createResponse(false, executionTime, null, e.getMessage()));
+            promise.reject("LOGS_ERROR", e.getMessage());
         }
     }
 
@@ -248,12 +304,12 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
                 long endTime = System.currentTimeMillis();
                 long executionTime = endTime - startTime;
 
-                promise.reject("LOGS_ERROR", Utils.createResponse(false, executionTime, null, "Failed to retrieve SMS logs."));
+                promise.reject("LOGS_ERROR", "Failed to retrieve SMS logs.");
             }
         } catch (Exception e) {
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            promise.reject("LOGS_ERROR", Utils.createResponse(false, executionTime, null, e.getMessage()));
+            promise.reject("LOGS_ERROR", e.getMessage());
         }
     }
 
@@ -297,7 +353,7 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
                 } catch (Exception e) {
                     long endTime = System.currentTimeMillis();
                     long executionTime = endTime - startTime;
-                    promise.reject("LOGS_ERROR", Utils.createResponse(false, executionTime, null, e.getMessage()));
+                    promise.reject("LOGS_ERROR",  e.getMessage());
                 } finally {
                     cursor.close();
                 }
@@ -310,7 +366,7 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
             Log.e("fetchSmsThreadIdLogs",  e.getMessage() );
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            promise.reject("LOGS_ERROR", Utils.createResponse(false, executionTime, null, e.getMessage()));
+            promise.reject("LOGS_ERROR",  e.getMessage());
         }
     }
 
@@ -347,7 +403,7 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
             }
             promise.resolve(writableArray);
         } catch (Exception e) {
-            promise.reject("ERROR", e);
+            promise.reject("ERROR",  e.getMessage());
         }
     }
 
