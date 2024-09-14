@@ -9,7 +9,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { ApolloProvider } from '@apollo/client';
 import SplashScreen from 'react-native-splash-screen';
 
-import LoginScreen from './pages/LoginScreen';
+import { ToastProvider } from 'react-native-toast-notifications'
+
+// import LoginScreen from './pages/LoginScreen';
 import CallLogsStackScreen from "./pages/CallLogsStackScreen";
 import SMSStackScreen from "./pages/SMSStackScreen";
 import MyBlocklistStackScreen from "./pages/MyBlocklistStackScreen";
@@ -25,7 +27,6 @@ import { MyProvider } from './MyProvider'
 
 const Tab = createBottomTabNavigator();
 const { DatabaseHelper } = NativeModules;
-
 
 export const AppNavigator: React.FC = () => {
   const count = useSelector((state: RootState) => state.counter.value);
@@ -105,30 +106,30 @@ export const AppNavigator: React.FC = () => {
           {/* <View style={{ flex: 1 }}> */}
             <Tab.Navigator>
               <Tab.Screen 
-                name={`Call Logs (${callLogs.length})`}
+                name={`Call Logs`}
                 component={CallLogsStackScreen} 
                 options={({ route }) => ({
-                  tabBarBadge: 3,
+                  // tabBarBadge: 0,
                   tabBarIcon: ({ color, size }) => (
-                    <Icon name="odnoklassniki" color={color} size={size} />
+                    <Icon name="phone" color={color} size={size} />
                   ),
                 })}  
               />
               <Tab.Screen 
-                name={`SMS (${smsLogs.length})`}
+                name={`SMS`}
                 component={SMSStackScreen} 
                 options={({ route }) => ({
-                  tabBarBadge: 2,
+                  // tabBarBadge: 0,
                   tabBarIcon: ({ color, size }) => (
                     <Icon name="envelope-open-o" color={color} size={size} />
                   ),
                 })}  
               />
               <Tab.Screen 
-                name="My Blocklist" 
+                name="Blocklist" 
                 component={MyBlocklistStackScreen} 
                 options={({ route }) => ({
-                  tabBarBadge: 9,
+                  // tabBarBadge: 9,
                   tabBarIcon: ({ color, size }) => (
                     <Icon name="lock" color={color} size={size} />
                   ),
@@ -152,6 +153,7 @@ export const App: React.FC = () => {
   }, []);
 
   return (
+    <ToastProvider>
     <ApolloProvider client={client}>
       <Provider store={store}>
         <ProviderPaper>
@@ -159,5 +161,6 @@ export const App: React.FC = () => {
         </ProviderPaper>
       </Provider>
     </ApolloProvider>
+    </ToastProvider>
   );
 };

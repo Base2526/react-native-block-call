@@ -2,7 +2,7 @@ import React, { useState, useEffect, ReactNode, createContext, useContext } from
 import LoginModal from "./pages/LoginModal"
 
 interface MyContextType {
-    openLoginModal: (open: boolean) => void;
+    openLoginModal: () => void;
 }
 
 const MyContext = createContext<MyContextType | undefined>(undefined);
@@ -18,7 +18,6 @@ export const useMyContext = () => {
 export const MyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [visible, setVisible] = useState(false)
     const openLoginModal = () => {
-      console.log("openLoginModal")
       setVisible(true)
     };
   

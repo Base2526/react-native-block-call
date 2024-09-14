@@ -1,4 +1,4 @@
-package com.yourprojectname.newarchitecture.modules;
+package com.blockcall.architecture.modules;
 
 import com.facebook.jni.HybridData;
 import com.facebook.react.ReactPackage;

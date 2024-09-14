@@ -61,8 +61,10 @@ const DrawerContent: React.FC<MenuProps> = ({ isOpen, onClose, navigation }) => 
             </> */}
 
           
-
-            <TouchableOpacity style={styles.buttonLogin} onPress={()=>openLoginModal()}  >
+            <TouchableOpacity style={styles.buttonLogin} onPress={()=>{
+              openLoginModal();
+              onClose();
+            }}>
               <View style={styles.buttonContent}>
                 <Text style={styles.buttonText}>Login</Text>
               </View>
@@ -174,7 +176,7 @@ const styles = StyleSheet.create({
   },
 
   buttonLogin: {
-    backgroundColor: '#00A500',
+    backgroundColor: '#ee2b29',
     paddingVertical: 12,
     borderRadius: 8,
     width: '100%',
@@ -183,7 +185,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 16,
-    color: '#000000',
+    color: '#fff',
     textAlign: 'center',
     fontWeight: 'bold',
   },

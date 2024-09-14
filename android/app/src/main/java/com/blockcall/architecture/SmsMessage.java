@@ -1,4 +1,4 @@
-package com.yourprojectname.newarchitecture;
+package com.blockcall.architecture;
 
 /*
 *     1. _id: The unique identifier for the SMS message.

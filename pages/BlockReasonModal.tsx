@@ -1,47 +1,114 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Button, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Button, StyleSheet, NativeModules } from 'react-native';
 import Modal from 'react-native-modal';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useToast } from "react-native-toast-notifications";
 
-const BlockReasonModal = ({ visible, onClose }) => {
+const { DatabaseHelper } = NativeModules;
+
+interface choiceItem {
+  id: number;
+  name: string;
+}
+
+interface dataItem {
+  phoneNumber: string;
+  type: number;
+  detail: string;
+  reporter: string;
+}
+
+interface BlockReasonModalProps {
+  visible: boolean;
+  phoneNumber: string;
+  onClose: () => void;
+}
+
+const choices: choiceItem[] = [ {id: 1, name: 'Sales/Ads'}, 
+                                {id: 2, name: 'Fraud'}, 
+                                {id: 3, name: 'Harassment'}, 
+                                {id: 4, name: 'Other'} ];
+
+const BlockReasonModal: React.FC<BlockReasonModalProps> = ({ visible, phoneNumber, onClose }) => {
   const [isModalVisible, setModalVisible] = useState(visible);
-  const [selectedChoice, setSelectedChoice] = useState(null);
+  const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
   const [otherText, setOtherText] = useState('');
 
-  const choices = ['Sales/Ads', 'Fraud', 'Harassment', 'Other'];
+  const toast = useToast();
 
-  const handleChoiceSelect = (choice) => {
-    setSelectedChoice(choice);
-    if (choice === 'Other') {
-      setOtherText(''); // Clear the input field if "Other" is selected
+  const handleChoiceSelect = (choice: choiceItem) => {
+    selectedChoice === choice.id ? setSelectedChoice(null) : setSelectedChoice(choice.id);
+
+    if (choice.id === 4) {
+      setOtherText(''); 
     }
   };
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
     if (!isModalVisible) {
-      onClose(); // Call the onClose function when the modal is closed
+      onClose(); 
     }
   };
 
+  const handleBlock = async() =>{
+    try {
+      let data: dataItem = { phoneNumber, type: selectedChoice ? selectedChoice : -1, detail: otherText, reporter: "" }
+      const response = await DatabaseHelper.addBlockNumberData(data);
+      console.log("response :", response);
+
+      if(response){
+        toast.show("Complete.", {
+          type: "normal",
+          placement: "bottom",
+          duration: 4000,
+          animationType: "slide-in",
+        });
+
+        onClose()
+      }
+      // const responseBlockNumberAll = await DatabaseHelper.getBlockNumberAllData()
+      // console.log("responseBlockNumberAll:", responseBlockNumberAll);
+    } catch (error ) {
+      
+      if(error instanceof Error){
+        toast.show(error.message, {
+          type: "danger",
+          placement: "bottom",
+          duration: 4000,
+          animationType: "slide-in",
+          style: {
+            zIndex: 100, // Adjust the zIndex value as needed
+          },
+        });
+      }else{
+        console.error("Error fetching call logs:", error);
+      }
+    }
+  }
+
   return (
-    <Modal isVisible={isModalVisible} onBackdropPress={toggleModal} onModalHide={toggleModal}>
+    <Modal 
+      isVisible={isModalVisible} 
+      onBackdropPress={toggleModal} 
+      onModalHide={toggleModal}>
       <View style={styles.modalContent}>
         <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
           <Icon name="close" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.title}>Select block reason</Text>
-        {choices.map((choice) => (
-          <TouchableOpacity
-            key={choice}
-            style={styles.choiceButton}
-            onPress={() => handleChoiceSelect(choice)}
-          >
-            <Text style={styles.choiceText}>{choice}</Text>
-            {selectedChoice === choice && <Icon name="check" size={15} style={styles.icon} />}
-          </TouchableOpacity>
-        ))}
-        {selectedChoice === 'Other' && (
+        {
+          choices.map((choice: choiceItem) => {
+            return  <TouchableOpacity
+                      key={choice.id}
+                      style={styles.choiceButton}
+                      onPress={() => handleChoiceSelect(choice) }>
+                      <Text style={styles.choiceText}>{choice.name}</Text>
+                      {selectedChoice === choice.id && <Icon name="check" size={15} style={styles.icon} />}
+                    </TouchableOpacity>
+          })
+        }
+        { selectedChoice === 4 && (
           <TextInput
             style={styles.input}
             placeholder="Enter details"
@@ -51,7 +118,7 @@ const BlockReasonModal = ({ visible, onClose }) => {
             numberOfLines={4}
           />
         )}
-        <Button title="Block" onPress={toggleModal} />
+        <Button title="Block" disabled={selectedChoice ? false : true} onPress={handleBlock} />
       </View>
     </Modal>
   );
@@ -62,13 +129,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 20,
     borderRadius: 10,
-    position: 'relative', // Ensure the close button is positioned relative to this container
+    position: 'relative', 
+    zIndex: 1,
   },
   closeButton: {
     position: 'absolute',
     top: 10,
     right: 10,
-    zIndex: 1, // Ensure the button is above other content
+    zIndex: 1, 
   },
   title: {
     fontSize: 18,
@@ -80,7 +148,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 8,
     borderRadius: 10,
-    textAlignVertical: 'top', // Ensure text starts from the top of the input field
+    textAlignVertical: 'top', 
   },
   choiceButton: {
     flexDirection: 'row',

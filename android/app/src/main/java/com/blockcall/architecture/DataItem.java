@@ -1,18 +1,20 @@
-package com.yourprojectname.newarchitecture;
+package com.blockcall.architecture;
 
 public class DataItem {
 
     private int id;
     private String phoneNumber;
+    private String type;
     private String detail;
     private String reporter;
 
     public DataItem(){}
 
     // Constructor
-    public DataItem(int id, String phoneNumber, String detail, String reporter) {
+    public DataItem(int id, String phoneNumber, String type, String detail, String reporter) {
         this.id = id;
         this.phoneNumber = phoneNumber;
+        this.type = type;
         this.detail = detail;
         this.reporter = reporter;
     }
@@ -24,6 +26,10 @@ public class DataItem {
 
     public String getPhoneNumber() {
         return phoneNumber;
+    }
+
+    public String getType() {
+        return type;
     }
 
     public String getDetail() {
@@ -41,6 +47,10 @@ public class DataItem {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public void setDetail(String detail) {
