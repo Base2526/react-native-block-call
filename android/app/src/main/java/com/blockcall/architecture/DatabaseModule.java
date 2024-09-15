@@ -41,7 +41,7 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
         long startTime = System.currentTimeMillis();
         try {
             Log.i(TAG, itemMap.toString());
-            String phoneNumber = itemMap.getString("phoneNumber");
+            String phoneNumber = itemMap.getString("PHONE_NUMBER");
             // Check if the phone number already exists in the database
             if (databaseHelper.isPhoneNumberExists(phoneNumber)) {
 
@@ -53,16 +53,19 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 
             DataItem item = new DataItem();
             item.setPhoneNumber(phoneNumber);
-            item.setType(String.valueOf(itemMap.getInt("type")));
-            item.setDetail(itemMap.getString("detail"));
-            item.setReporter(itemMap.getString("reporter"));
+            item.setType(String.valueOf(itemMap.getInt("TYPE")));
+            item.setDetail(itemMap.getString("DETAIL"));
+            item.setReporter(itemMap.getString("REPORTER"));
 
-            boolean success = databaseHelper.addBlockNumberData(item);
+            int result = databaseHelper.addBlockNumberData(item);
 
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            if (success) {
-                promise.resolve(Utils.createResponse(true, executionTime, null, ""));
+            if (result != -1) {
+
+                WritableMap cursor = databaseHelper.getBlockNumberDataById(Integer.toString(result));
+
+                promise.resolve(Utils.createResponseMap(true, executionTime, cursor, ""));
             } else {
                 promise.reject("LOGS_ERROR", "Failed to insert data");
             }
@@ -92,20 +95,31 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void getBlockNumberDataById(String id,Promise promise) {
-        String cursor = databaseHelper.getBlockNumberDataById(id);
-        promise.resolve(cursor);
+        long startTime = System.currentTimeMillis();
+        try {
+            WritableMap cursor = databaseHelper.getBlockNumberDataById(id);
+            promise.resolve(cursor);
+
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.resolve( Utils.createResponseMap(true, executionTime, cursor, ""));
+        } catch (Exception e) {
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.reject("LOGS_ERROR", e.getMessage());
+        }
     }
 
     @ReactMethod
     public void getBlockNumberDataByName(String phoneNumber, Promise promise) {
         long startTime = System.currentTimeMillis();
         try {
-            WritableArray cursor = databaseHelper.getDataByPhoneNumber(phoneNumber);
+            WritableMap cursor = databaseHelper.getDataByPhoneNumber(phoneNumber);
 //            promise.resolve(cursor);
             
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            promise.resolve( Utils.createResponse(true, executionTime, cursor, ""));
+            promise.resolve( Utils.createResponseMap(true, executionTime, cursor, ""));
         } catch (Exception e) {
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
@@ -121,7 +135,7 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 //            promise.resolve(cursor);
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            promise.resolve( Utils.createResponse(true, executionTime, cursor, ""));
+            promise.resolve( Utils.createResponseArray(true, executionTime, cursor, ""));
         } catch (Exception e) {
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
@@ -144,7 +158,7 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            promise.resolve(Utils.createResponse(true, executionTime, null, ""));
+            promise.resolve(Utils.createResponseInt(true, executionTime, 0, ""));
         } catch (Exception e) {
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
@@ -161,7 +175,7 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            promise.resolve(Utils.createResponse(true, executionTime, null, ""));
+            promise.resolve(Utils.createResponseInt(true, executionTime, 0, ""));
         } catch (Exception e) {
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
@@ -230,7 +244,7 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 
                 long endTime = System.currentTimeMillis();
                 long executionTime = endTime - startTime;
-                promise.resolve(Utils.createResponse(true, executionTime, groupedCallList, ""));
+                promise.resolve(Utils.createResponseArray(true, executionTime, groupedCallList, ""));
             }
         } catch (Exception e) {
             long endTime = System.currentTimeMillis();
@@ -299,7 +313,7 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 
                 long endTime = System.currentTimeMillis();
                 long executionTime = endTime - startTime;
-                promise.resolve(Utils.createResponse(true, executionTime, groupedSmsList, ""));
+                promise.resolve(Utils.createResponseArray(true, executionTime, groupedSmsList, ""));
             } else {
                 long endTime = System.currentTimeMillis();
                 long executionTime = endTime - startTime;
@@ -325,7 +339,8 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 
             Cursor cursor = getReactApplicationContext().getContentResolver().query(smsUri, null, selection, selectionArgs, null);
 
-            WritableArray threadIds = Arguments.createArray();
+//            WritableArray threadIds = Arguments.createArray();
+            String thread_id = "0";
             if (cursor != null) {
                 try {
                     while (cursor.moveToNext()) {
@@ -335,21 +350,21 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 //                        long date = cursor.getLong(cursor.getColumnIndex("date"));
 
                         String id =  cursor.getString(cursor.getColumnIndexOrThrow("_id"));
-                        String thread_id = cursor.getString(cursor.getColumnIndexOrThrow("thread_id"));
+                        thread_id = cursor.getString(cursor.getColumnIndexOrThrow("thread_id"));
 
                         // Process the SMS data
 //                        Log.d("fetchSmsThreadIdLogs", "thread_id: " + thread_id );
 
 //                        threadId.add(thread_id);
 
-                        threadIds.pushString(thread_id);
+//                        threadIds.pushString(thread_id);
                     }
 
-                    WritableArray newThreadIds = Utils.removeDuplicates(threadIds);
+//                    WritableArray newThreadIds = Utils.removeDuplicates(threadIds);
 
                     long endTime = System.currentTimeMillis();
                     long executionTime = endTime - startTime;
-                    promise.resolve(Utils.createResponse(true, executionTime, newThreadIds, ""));
+                    promise.resolve(Utils.createResponseInt(true, executionTime, Integer.parseInt(thread_id), ""));
                 } catch (Exception e) {
                     long endTime = System.currentTimeMillis();
                     long executionTime = endTime - startTime;
@@ -361,7 +376,7 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            promise.resolve(Utils.createResponse(true, executionTime, threadIds, ""));
+            promise.resolve(Utils.createResponseInt(true, executionTime, Integer.parseInt(thread_id), ""));
         } catch (Exception e) {
             Log.e("fetchSmsThreadIdLogs",  e.getMessage() );
             long endTime = System.currentTimeMillis();
@@ -417,7 +432,7 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
 
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            promise.resolve(Utils.createResponse(true, executionTime,  null, ""));
+            promise.resolve(Utils.createResponseInt(true, executionTime,  0, ""));
         } catch (Exception e) {
             promise.reject("ERROR", e);
         }

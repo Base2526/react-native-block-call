@@ -13,6 +13,9 @@ import { CallLog, ItemCall } from "../redux/interface";
 import { formatDate } from "../utils";
 import BlockReasonModal from './BlockReasonModal'; 
 import TabIconWithMenu from "../TabIconWithMenu"
+import { BlockItem } from "../redux/interface"
+
+import { removeBlock } from "../redux/slices/blockSlice";
 
 const { DatabaseHelper } = NativeModules;
 
@@ -22,36 +25,7 @@ type MyBlocklistScreenProps = {
   setMenuOpen: () => void; // Define the function prop
 };
 
-interface dataItem{
-  ID: string;
-  DETAIL: string;
-  NAME: string;
-  PHONE_NUMBER: string;
-  PHOTO_URI: string | null;
-  REPORTER: string;
-  CREATE_AT: string;
-  UPDATE_AT: string;
-}
-
 const MyBlocklistScreen: React.FC<MyBlocklistScreenProps> = ({ navigation, route, setMenuOpen }) => {
-  
-  const [refreshing, setRefreshing] = useState(false);
-  const [visibleMenuId, setVisibleMenuId] = useState<string | null>(null);
-
-  const [datas, setDatas] = useState<dataItem[] | []>([])
-
-  const openMenu = (id: string) => setVisibleMenuId(id);
-  const closeMenu = () => setVisibleMenuId(null);
-
-  const dispatch: AppDispatch = useDispatch();
-  const callLogs = useSelector((state: RootState) => state.callLog.callLogs);
-
-  const [isModalVisible, setModalVisible] = useState(false);
-  const openModal = () => setModalVisible(true);
-  const closeModal = () => setModalVisible(false);
-
-  const toast = useToast();
-
   useLayoutEffect(() => {
     const routeName = getFocusedRouteNameFromRoute(route);
 
@@ -89,32 +63,42 @@ const MyBlocklistScreen: React.FC<MyBlocklistScreenProps> = ({ navigation, route
     });
   }, [navigation, route]);
   
-  const fetchBlockNumberAll = async()=>{
-    try {
-      const response = await DatabaseHelper.getBlockNumberAllData();
-      console.log("response :", response);
+  const [refreshing, setRefreshing] = useState(false);
+  const [visibleMenuId, setVisibleMenuId] = useState<string | null>(null);
 
-      if(response.status){
-        setDatas(response.data)
-      }
-    } catch (error ) {
-      console.error("useEffect : ", error);
-    }
-  }
+  // const [datas, setDatas] = useState<BlockItem[] | []>([])
+
+  const openMenu = (id: string) => setVisibleMenuId(id);
+  const closeMenu = () => setVisibleMenuId(null);
+
+  const dispatch: AppDispatch = useDispatch();
+  const callLogs = useSelector((state: RootState) => state.callLog.callLogs);
+
+  const [isModalVisible, setModalVisible] = useState(false);
+  const openModal = () => setModalVisible(true);
+  const closeModal = () => setModalVisible(false);
+
+  const blockList = useSelector((state: RootState) => state.block.blockList );
+
+  const toast = useToast();
+
+  // const fetchBlockNumberAll = async()=>{
+  //   try {
+  //     const response = await DatabaseHelper.getBlockNumberAllData();
+  //     console.log("response :", response);
+  //     if(response.status){
+  //       setDatas(response.data)
+  //     }
+  //   } catch (error ) {
+  //     console.error("useEffect : ", error);
+  //   }
+  // }
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    fetchBlockNumberAll();
+    // fetchBlockNumberAll();
     setRefreshing(false);
   }, []);
-
-  useEffect(() =>{
-    fetchBlockNumberAll();
-  }, [])
-
-  useEffect(() =>{
-    console.log("data :", datas)
-  }, [datas])
 
   const renderItemCall = (type: string) => {
     switch (type) {
@@ -131,15 +115,13 @@ const MyBlocklistScreen: React.FC<MyBlocklistScreenProps> = ({ navigation, route
     }
   };
 
-  /*
-  {"DETAIL": "", "ID": "1", "NAME": "ชมพู่", "PHONE_NUMBER": "0898945536", "PHOTO_URI": null, "REPORTER": ""}
-  */
-
-  const handleUnblock = async(data: dataItem) =>{
+  const handleUnblock = async(data: BlockItem) =>{
     try {
       const response = await DatabaseHelper.deleteBlockNumberData(data.ID);
       console.log("response :", response);
       if(response.status){
+        dispatch(removeBlock(data.ID))
+
         toast.show("Unblock.", {
           type: "normal",
           placement: "bottom",
@@ -147,7 +129,7 @@ const MyBlocklistScreen: React.FC<MyBlocklistScreenProps> = ({ navigation, route
           animationType: "slide-in",
         });
       }
-      fetchBlockNumberAll();
+      // fetchBlockNumberAll();
       closeMenu();
     } catch (error ) {
       if(error instanceof Error){
@@ -166,15 +148,14 @@ const MyBlocklistScreen: React.FC<MyBlocklistScreenProps> = ({ navigation, route
     }
   }
 
-  const renderItem = useCallback(({ item }: { item: dataItem }) => {
+  const renderItem = useCallback(({ item }: { item: BlockItem }) => {
     // const itemCall: ItemCall = item.callLogs[0];
     return (
       <TouchableOpacity
         style={styles.itemContainer}
         onPress={() => { navigation.navigate("CallLogsDetail", { itemId: item.PHONE_NUMBER }); }}
         onLongPress={() => Alert.alert("onLongPress")}
-        key= {item.ID}
-      >
+        key= {item.ID}>
         <View style={styles.avatarContainer}>
           {item.PHOTO_URI
             ? <Image source={{ uri: item.PHOTO_URI }} style={styles.image} />
@@ -209,14 +190,14 @@ const MyBlocklistScreen: React.FC<MyBlocklistScreenProps> = ({ navigation, route
   return (
     <View style={styles.container}>
       {
-        datas.length === 0 ? (
+        blockList.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Icon name="file-document-outline" size={80} color="#ccc" />
             <Text style={styles.emptyText}>No Call Logs Found</Text>
           </View>
         ) : (
           <FlatList
-            data={datas}
+            data={blockList}
             renderItem={renderItem}
             keyExtractor={(item) => item.PHONE_NUMBER}
             initialNumToRender={10}

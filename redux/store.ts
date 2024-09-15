@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'; // for Rea
 import counterReducer from './slices/counterSlice';
 import calllogReducer from './slices/calllogSlice';
 import smslogReducer from './slices/smslogSlice';
+import blockReducer from './slices/blockSlice';
 
 // Define persist configuration
 const persistConfig = {
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
     counter: counterReducer,
     callLog: calllogReducer,
     smsLog: smslogReducer,
+    block: blockReducer
 });
 
 // Create a persisted reducer

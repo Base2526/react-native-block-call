@@ -1,21 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Button, StyleSheet, NativeModules } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, NativeModules } from 'react-native';
 import Modal from 'react-native-modal';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useToast } from "react-native-toast-notifications";
-
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '../redux/store';
+import { addBlock } from "../redux/slices/blockSlice";
+import { BlockItem } from "../redux/interface";
 const { DatabaseHelper } = NativeModules;
 
 interface choiceItem {
   id: number;
   name: string;
-}
-
-interface dataItem {
-  phoneNumber: string;
-  type: number;
-  detail: string;
-  reporter: string;
 }
 
 interface BlockReasonModalProps {
@@ -24,16 +20,20 @@ interface BlockReasonModalProps {
   onClose: () => void;
 }
 
-const choices: choiceItem[] = [ {id: 1, name: 'Sales/Ads'}, 
-                                {id: 2, name: 'Fraud'}, 
-                                {id: 3, name: 'Harassment'}, 
-                                {id: 4, name: 'Other'} ];
+const choices: choiceItem[] = [ 
+  {id: 1, name: 'Sales/Ads'}, 
+  {id: 2, name: 'Fraud'}, 
+  {id: 3, name: 'Harassment'}, 
+  {id: 4, name: 'Other'} 
+];
 
 const BlockReasonModal: React.FC<BlockReasonModalProps> = ({ visible, phoneNumber, onClose }) => {
   const [isModalVisible, setModalVisible] = useState(visible);
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
   const [otherText, setOtherText] = useState('');
+  const [loading, setLoading] = useState(false);
 
+  const dispatch: AppDispatch = useDispatch();
   const toast = useToast();
 
   const handleChoiceSelect = (choice: choiceItem) => {
@@ -51,27 +51,27 @@ const BlockReasonModal: React.FC<BlockReasonModalProps> = ({ visible, phoneNumbe
     }
   };
 
-  const handleBlock = async() =>{
+  const handleBlock = async () => {
+    setLoading(true);
     try {
-      let data: dataItem = { phoneNumber, type: selectedChoice ? selectedChoice : -1, detail: otherText, reporter: "" }
+      let data: BlockItem = { PHONE_NUMBER: phoneNumber, TYPE: selectedChoice ? selectedChoice : -1, DETAIL: otherText, REPORTER: "" }
       const response = await DatabaseHelper.addBlockNumberData(data);
-      console.log("response :", response);
+      console.log("response @@@@@ :", response);
 
-      if(response){
+      if (response) {
+        dispatch(addBlock(response.data));
+
         toast.show("Complete.", {
-          type: "normal",
+          type: "success",
           placement: "bottom",
           duration: 4000,
           animationType: "slide-in",
         });
 
-        onClose()
+        onClose();
       }
-      // const responseBlockNumberAll = await DatabaseHelper.getBlockNumberAllData()
-      // console.log("responseBlockNumberAll:", responseBlockNumberAll);
-    } catch (error ) {
-      
-      if(error instanceof Error){
+    } catch (error) {
+      if (error instanceof Error) {
         toast.show(error.message, {
           type: "danger",
           placement: "bottom",
@@ -81,9 +81,11 @@ const BlockReasonModal: React.FC<BlockReasonModalProps> = ({ visible, phoneNumbe
             zIndex: 100, // Adjust the zIndex value as needed
           },
         });
-      }else{
+      } else {
         console.error("Error fetching call logs:", error);
       }
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -98,15 +100,15 @@ const BlockReasonModal: React.FC<BlockReasonModalProps> = ({ visible, phoneNumbe
         </TouchableOpacity>
         <Text style={styles.title}>Select block reason</Text>
         {
-          choices.map((choice: choiceItem) => {
-            return  <TouchableOpacity
-                      key={choice.id}
-                      style={styles.choiceButton}
-                      onPress={() => handleChoiceSelect(choice) }>
-                      <Text style={styles.choiceText}>{choice.name}</Text>
-                      {selectedChoice === choice.id && <Icon name="check" size={15} style={styles.icon} />}
-                    </TouchableOpacity>
-          })
+          choices.map((choice: choiceItem) => (
+            <TouchableOpacity
+              key={choice.id}
+              style={styles.choiceButton}
+              onPress={() => handleChoiceSelect(choice) }>
+              <Text style={styles.choiceText}>{choice.name}</Text>
+              {selectedChoice === choice.id && <Icon name="check" size={15} style={styles.icon} />}
+            </TouchableOpacity>
+          ))
         }
         { selectedChoice === 4 && (
           <TextInput
@@ -118,7 +120,13 @@ const BlockReasonModal: React.FC<BlockReasonModalProps> = ({ visible, phoneNumbe
             numberOfLines={4}
           />
         )}
-        <Button title="Block" disabled={selectedChoice ? false : true} onPress={handleBlock} />
+        <TouchableOpacity 
+          style={[styles.button, { opacity: selectedChoice ? 1 : 0.6 }]} 
+          onPress={handleBlock}
+          disabled={!selectedChoice}>
+          <Text style={styles.buttonText}>Block</Text>
+          {loading && <ActivityIndicator size="small" color="#fff" style={styles.buttonIndicator} />}
+        </TouchableOpacity>
       </View>
     </Modal>
   );
@@ -161,6 +169,22 @@ const styles = StyleSheet.create({
   },
   icon: {
     color: 'green',
+    marginLeft: 10,
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  buttonIndicator: {
     marginLeft: 10,
   },
 });

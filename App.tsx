@@ -19,11 +19,12 @@ import * as utils from "./utils"
 import { store } from './redux/store';
 import { RootState, AppDispatch } from './redux/store';
 import LoadingDialog from './LoadingDialog';
-import { addMultipleCallLogs, clearCallLogs } from './redux/slices/calllogSlice'
-import { addMultipleSmsLogs, clearSmsLogs } from './redux/slices/smslogSlice'
+import { addMultipleCallLogs, clearCallLogs } from './redux/slices/calllogSlice';
+import { addMultipleSmsLogs, clearSmsLogs } from './redux/slices/smslogSlice';
+import { addBlocks } from "./redux/slices/blockSlice";
 import client from './apollo/apolloClient';
 
-import { MyProvider } from './MyProvider'
+import { MyProvider } from './MyProvider';
 
 const Tab = createBottomTabNavigator();
 const { DatabaseHelper } = NativeModules;
@@ -72,6 +73,21 @@ export const AppNavigator: React.FC = () => {
     }
   };
 
+  const fetchBlockList = async()=>{
+    try {
+      const response = await DatabaseHelper.getBlockNumberAllData();
+      console.log("fetchBlockNumberAll :", response);
+
+      if(response.status){
+        dispatch(addBlocks(response.data))
+      }else{
+        console.error("fetchBlockNumberAll:", response.message);
+      }
+    } catch (error ) {
+      console.error("useEffect : ", error);
+    }
+  }
+
   useEffect(()=>{
     const checkLogin = async () => {
       let isLogin = await utils.getObject('login');
@@ -83,6 +99,7 @@ export const AppNavigator: React.FC = () => {
 
     fetchCallLogs();
     fetchSmsLogs();
+    fetchBlockList();
 
     setLoading(false)
   }, [])

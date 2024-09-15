@@ -36,15 +36,27 @@ export interface SmsLog {
     updatedAt?: string; 
 }
 
-export enum BlockType {
-    call = 0,
-    sms = 1
-}
+// export enum BlockType {
+//     call = 0,
+//     sms = 1
+// }
 
-export interface BlockLog {
-    type: BlockType;
-    name: string;
-    address: string; // phone & address
-    createdAt?: string; 
-    updatedAt?: string; 
-}
+// export interface BlockLog {
+//     type: BlockType;
+//     name: string;
+//     address: string; // phone & address
+//     createdAt?: string; 
+//     updatedAt?: string; 
+// }
+
+export interface BlockItem{
+    ID?: string;
+    DETAIL?: string;
+    NAME?: string;
+    TYPE?: number;
+    PHONE_NUMBER?: string;
+    PHOTO_URI?: string | null;
+    REPORTER?: string;
+    CREATE_AT?: string;
+    UPDATE_AT?: string;
+}  

@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.provider.ContactsContract;
 
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 
@@ -65,6 +66,15 @@ public class Utils {
         return messages;
     }
 
+    public static boolean isWritableMapEmpty(WritableMap writableMap) {
+        if (writableMap == null) {
+            return true; // Consider null as empty
+        }
+
+        ReadableMapKeySetIterator iterator = writableMap.keySetIterator();
+        return !iterator.hasNextKey(); // If there are no keys, the map is empty
+    }
+
     public static WritableArray removeDuplicates(WritableArray originalArray) {
         // Create a HashSet to store unique values
         Set<String> uniqueSet = new HashSet<>();
@@ -86,8 +96,7 @@ public class Utils {
         return newArray;
     }
 
-
-    public static WritableMap createResponse(Boolean status, double executionTime, WritableArray data, String message) {
+    public static WritableMap createResponseArray(Boolean status, double executionTime, WritableArray data, String message) {
         WritableMap response = Arguments.createMap();
         response.putBoolean("status", status);
         response.putDouble("executionTime", executionTime  / (1000 * 60) ); // convert to minute
@@ -96,5 +105,21 @@ public class Utils {
         return response;
     }
 
+    public static WritableMap createResponseMap(Boolean status, double executionTime, WritableMap data, String message) {
+        WritableMap response = Arguments.createMap();
+        response.putBoolean("status", status);
+        response.putDouble("executionTime", executionTime  / (1000 * 60) ); // convert to minute
+        response.putMap("data", data);
+        response.putString("message", message);
+        return response;
+    }
 
+    public static WritableMap createResponseInt(Boolean status, double executionTime, int data, String message) {
+        WritableMap response = Arguments.createMap();
+        response.putBoolean("status", status);
+        response.putDouble("executionTime", executionTime  / (1000 * 60) ); // convert to minute
+        response.putInt("data", data);
+        response.putString("message", message);
+        return response;
+    }
 }

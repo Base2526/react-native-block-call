@@ -13,7 +13,7 @@ import BlockReasonModal from './BlockReasonModal';
 import { useMyContext } from '../MyProvider'; 
 import TabIconWithMenu from "../TabIconWithMenu"
 
-const { DatabaseHelper } = NativeModules;
+// const { DatabaseHelper } = NativeModules;
 
 type CallLogsProps = {
   navigation: any;
@@ -84,10 +84,11 @@ const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpe
 
   const dispatch: AppDispatch = useDispatch();
   const callLogs = useSelector((state: RootState) => state.callLog.callLogs);
+  const blockList = useSelector((state: RootState) => state.block.blockList );
 
 
   const [blockReasonModal, setBlockReasonModal] = useState<ItemCall | null>(null);
-  const [blockNumber, setBlockNumber] = useState<BlockNumberItem | []>([]);
+  // const [blockNumber, setBlockNumber] = useState<BlockNumberItem | []>([]);
 
   const openBlockReasonModal = (item: ItemCall) => {
     setBlockReasonModal(item);
@@ -97,26 +98,26 @@ const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpe
     setBlockReasonModal(null);
   };
 
-  const fetchBlockNumberAll = async()=>{
-    try {
-      const response = await DatabaseHelper.getBlockNumberAllData();
-      console.log("response :", response);
+  // const fetchBlockNumberAll = async()=>{
+  //   try {
+  //     const response = await DatabaseHelper.getBlockNumberAllData();
+  //     console.log("response :", response);
 
-      if(response.status){
-        setBlockNumber(response.data)
-      }
-    } catch (error ) {
-      console.error("useEffect : ", error);
-    }
-  }
+  //     if(response.status){
+  //       setBlockNumber(response.data)
+  //     }
+  //   } catch (error ) {
+  //     console.error("useEffect : ", error);
+  //   }
+  // }
 
-  useEffect(()=>{
-    fetchBlockNumberAll()
-  }, [])
+  // useEffect(()=>{
+  //   // fetchBlockNumberAll()
+  // }, [])
 
-  useEffect(()=>{
-    console.log("blockNumber :", blockNumber)
-  }, [blockNumber])
+  // useEffect(()=>{
+  //   console.log("blockNumber :", blockNumber)
+  // }, [blockNumber])
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -155,8 +156,8 @@ const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpe
             : <Icon name="account" size={30} />
           }
           {
-          _.find(blockNumber, (v: BlockNumberItem)=>{
-            console.log(">> ", v.PHONE_NUMBER," | " ,item.number, v.PHONE_NUMBER === item.number)
+          _.find(blockList, (v: BlockNumberItem)=>{
+            // console.log(">> ", v.PHONE_NUMBER," | " ,item.number, v.PHONE_NUMBER === item.number)
             if(v.PHONE_NUMBER === item.number) return true;
             return false
           }) 
@@ -196,7 +197,7 @@ const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpe
       </TouchableOpacity>
     );
   // }
-  }, [visibleMenuId, blockNumber]);
+  }, [visibleMenuId, blockList]);
 
   return (
     <>

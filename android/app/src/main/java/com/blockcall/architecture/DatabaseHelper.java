@@ -65,7 +65,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // Add a new entry
-    public boolean addBlockNumberData(DataItem i) {
+    public int addBlockNumberData(DataItem i) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(COL_PHONE_NUMBER, i.getPhoneNumber());
@@ -74,7 +74,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         contentValues.put(COL_REPORTER, i.getReporter());
 
         long result = db.insert(TABLE_NAME, null, contentValues);
-        return result != -1; // returns true if insert was successful
+//        return result != -1; // returns true if insert was successful
+
+        return (int)result;
     }
 
     public boolean addBlockNumberDatas(List<DataItem> datas) {
@@ -99,30 +101,50 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // Get entry by ID
-    public String getBlockNumberDataById(String id) {
+    public WritableMap getBlockNumberDataById(String id) {
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE ID = ?", new String[]{id});
 
+        WritableMap item = Arguments.createMap();
         if (cursor != null) {
             if (cursor.moveToFirst()) {
-                String result = "{ \""+COL_ID+"\": \"" + cursor.getString(0)
-                                + "\", \""+COL_PHONE_NUMBER+"\": \"" + cursor.getString(1) + "\""
-                                + "\", \""+COL_DETAIL+"\": \"" + cursor.getString(2) + "\""
-                                + "\", \""+ COL_REPORTER +"\": \"" + cursor.getString(3) + "\" }";
+//                String result = "{ \""+COL_ID+"\": \"" + cursor.getString(0)
+//                                + "\", \""+COL_PHONE_NUMBER+"\": \"" + cursor.getString(1) + "\""
+//                                + "\", \""+COL_DETAIL+"\": \"" + cursor.getString(2) + "\""
+//                                + "\", \""+ COL_REPORTER +"\": \"" + cursor.getString(3) + "\" }";
+//                return result; // return JSON string
+
+                item.putString(COL_ID, String.valueOf(cursor.getInt(0))); // Assuming ID is an integer
+                item.putString(COL_PHONE_NUMBER, cursor.getString(1));
+                item.putString(COL_DETAIL, cursor.getString(2));
+                item.putString(COL_REPORTER, cursor.getString(3));
+
+                item.putString(COL_CREATE_AT, cursor.getString(5));
+                item.putString(COL_UPDATE_AT, cursor.getString(6));
+
+                ContactInfo contactInfo =  Utils.getContactInfo(context, cursor.getString(1));
+                item.putString(COL_NAME, contactInfo.name);
+                item.putString(COL_PHOTO_URI, contactInfo.photoUri);
+
                 cursor.close();
-                return result; // return JSON string
+
+                return item;
+
             }
             cursor.close();
         }
-        return "{}"; // return empty JSON if not found
+//        return "{}"; // return empty JSON if not found
+
+        return item;
     }
 
     // Get entry by phone number
-    public WritableArray getDataByPhoneNumber(String phoneNumber) {
+    public WritableMap getDataByPhoneNumber(String phoneNumber) {
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE PHONE_NUMBER = ?", new String[]{phoneNumber});
 
-        WritableArray results = Arguments.createArray();
+//        WritableArray results = Arguments.createArray();
+        WritableMap item = Arguments.createMap();
         if (cursor != null) {
             if (cursor.moveToFirst()) {
 //                String result = "{ \""+ COL_ID +"\": \"" + cursor.getString(0)
@@ -132,17 +154,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 //                cursor.close();
 //                return result; // return JSON string
 
-                WritableMap item = Arguments.createMap();
+//                WritableMap item = Arguments.createMap();
 
                 item.putString(COL_ID, String.valueOf(cursor.getInt(0))); // Assuming ID is an integer
                 item.putString(COL_PHONE_NUMBER, cursor.getString(1));
                 item.putString(COL_DETAIL, cursor.getString(2));
 
-                results.pushMap(item);
+//                results.pushMap(item);
+
+                return item;
             }
             cursor.close();
         }
-        return results; // return empty JSON if not found
+        return item; // return empty JSON if not found
     }
 
     // Get all entries
