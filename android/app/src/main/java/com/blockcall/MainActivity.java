@@ -91,10 +91,12 @@ public class MainActivity extends ReactActivity {
     }
   }
 
+//  WRITE_CALL_LOG
   private void requestPermissions() {
     String[] permissions = {
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.READ_CALL_LOG,
+            Manifest.permission.WRITE_CALL_LOG,
             Manifest.permission.RECEIVE_SMS,
             Manifest.permission.ANSWER_PHONE_CALLS,
             Manifest.permission.READ_SMS,

@@ -14,9 +14,14 @@ const LoginModal: React.FC<LoginScreenProps> = ({ onLogin, closeLoginModal, visi
   const [usernameError, setUsernameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // New state to toggle password visibility
 
   const closeModal = () => {
     closeLoginModal();
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(prevState => !prevState);
   };
 
   const handleLogin = () => {
@@ -76,6 +81,7 @@ const LoginModal: React.FC<LoginScreenProps> = ({ onLogin, closeLoginModal, visi
               </View>
             </View>
 
+            {/*
             <TouchableOpacity style={styles.buttonFacebook} onPress={handleLogin}>
               <Text style={styles.buttonText}>Sign up with Facebook</Text>
             </TouchableOpacity>
@@ -85,6 +91,7 @@ const LoginModal: React.FC<LoginScreenProps> = ({ onLogin, closeLoginModal, visi
             </TouchableOpacity>
 
             <Text style={{fontSize:15, fontWeight: '500'}}>OR</Text>
+            */}
 
             {/* Username Input */}
             <TextInput
@@ -98,17 +105,23 @@ const LoginModal: React.FC<LoginScreenProps> = ({ onLogin, closeLoginModal, visi
             />
             {usernameError ? <View style={{width: '100%'}}><Text style={styles.errorText}>{usernameError}</Text></View>: null}
 
-            {/* Password Input */} 
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={true}
-              autoCapitalize="none"
-              onFocus={()=>{  setPasswordError(''); }}
-            />
-            {passwordError ? <View style={{width: '100%'}}><Text style={styles.errorText}>{passwordError}</Text></View> : null}
+             {/* Password Input */}
+             <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword} // Toggle password visibility
+                autoCapitalize="none"
+                onFocus={() => setPasswordError('')}
+              />
+              <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
+                <Icon name={showPassword ? "eye-off" : "eye"} size={20} color="#666" />
+              </TouchableOpacity>
+            </View>
+            {passwordError && <Text style={styles.errorText}>{passwordError}</Text>}
+
 
             {/* Login Button */}
             <TouchableOpacity style={styles.buttonLogin} onPress={handleLogin} disabled={loading}>
@@ -160,6 +173,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
+    paddingTop: 15
   },
   featuresContainer: {
     marginBottom: 20,
@@ -248,15 +262,23 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontWeight: '500',
   },
-
-//   buttonLogin: {
-//     backgroundColor: '#007bff',
-//     borderRadius: 5,
-//     padding: 10,
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     flexDirection: 'row',
-//   },
+  passwordContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderColor: '#DDDDDD',
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 10,
+    paddingRight: 10,
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 12,
+  },
+  eyeIcon: {
+    padding: 5,
+  },
   buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',

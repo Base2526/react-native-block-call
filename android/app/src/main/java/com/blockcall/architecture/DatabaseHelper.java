@@ -15,12 +15,12 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static String TAG = DatabaseHelper.class.getName();
-    private static final int DATABASE_VERSION = 2; // Increment this when upgrading
+    private static final int DATABASE_VERSION = 1; // Increment this when upgrading
 
     private static Context context = null;
-    private static final String DATABASE_NAME = "mydatabase.db";
-    private static final String TABLE_NAME = "BLOCK";
+    private static final String DATABASE_NAME = "blockcall.db";
 
+    private static final String TABLE_NAME = "BLOCK";
     private static final String COL_ID = "ID";
     private static final String COL_PHONE_NUMBER = "PHONE_NUMBER";
     private static final String COL_DETAIL = "DETAIL";
@@ -55,13 +55,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         //  db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
         //  onCreate(db);
-
         // Log.i(TAG, "oldVersion :" + oldVersion + ", newVersion :" + newVersion);
-
-        if (newVersion  == 2) {
-            // Add a new column 'age' to the existing table
-            db.execSQL("ALTER TABLE "+ TABLE_NAME +" ADD COLUMN " + COL_TYPE + " TEXT ");
-        }
+//        if (newVersion  == 2) {
+//            // Add a new column 'age' to the existing table
+//            db.execSQL("ALTER TABLE "+ TABLE_NAME +" ADD COLUMN " + COL_TYPE + " TEXT ");
+//        }
     }
 
     // Add a new entry
@@ -210,9 +208,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // Delete an entry
-    public Integer deleteBlockNumberData(String id) {
+    public Integer deleteBlockNumberData(String phoneNumber) {
         SQLiteDatabase db = this.getWritableDatabase();
-        return db.delete(TABLE_NAME, "ID = ?", new String[]{id});
+        return db.delete(TABLE_NAME, COL_PHONE_NUMBER + " = ?", new String[]{phoneNumber});
     }
 
     // Delete all data

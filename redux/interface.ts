@@ -54,7 +54,7 @@ export interface BlockItem{
     DETAIL?: string;
     NAME?: string;
     TYPE?: number;
-    PHONE_NUMBER?: string;
+    PHONE_NUMBER: string;
     PHOTO_URI?: string | null;
     REPORTER?: string;
     CREATE_AT?: string;

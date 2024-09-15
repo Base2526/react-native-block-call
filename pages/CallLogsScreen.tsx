@@ -1,24 +1,26 @@
-import React, { useEffect, useCallback, useState, useLayoutEffect } from 'react';
+import React, { useCallback, useState, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, RefreshControl, FlatList, NativeModules } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; 
 import { useSelector, useDispatch } from 'react-redux';
 import { Menu, Divider } from 'react-native-paper';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import _ from "lodash"
+import { useToast } from "react-native-toast-notifications";
 
 import { RootState, AppDispatch } from '../redux/store';
-import { CallLog, ItemCall } from "../redux/interface";
 import { getDate } from "../utils";
 import BlockReasonModal from './BlockReasonModal'; 
-import { useMyContext } from '../MyProvider'; 
 import TabIconWithMenu from "../TabIconWithMenu"
+import { CallLog, ItemCall } from "../redux/interface";
+import { removeBlock } from "../redux/slices/blockSlice";
+import { addMultipleCallLogs, removeCallLog } from '../redux/slices/calllogSlice';
 
-// const { DatabaseHelper } = NativeModules;
+const { DatabaseHelper } = NativeModules;
 
 type CallLogsProps = {
   navigation: any;
   route: any;
-  setMenuOpen: () => void; // Define the function prop
+  setMenuOpen: () => void;
 };
 
 interface BlockNumberItem{
@@ -66,15 +68,12 @@ const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpe
             iconName="dots-vertical"
             menuItems={[
               { label: 'Clear all', onPress: () => console.log('Item 1 pressed') },
-              // { label: 'Item 2', onPress: () => console.log('Item 2 pressed') },
             ]}/>
         </View>
       ),
       headerShown: true, 
     });
   }, [navigation, route]);
-
-  const { openLoginModal } = useMyContext();
 
   const [refreshing, setRefreshing] = useState(false);
   const [visibleMenuId, setVisibleMenuId] = useState<string | null>(null);
@@ -85,10 +84,32 @@ const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpe
   const dispatch: AppDispatch = useDispatch();
   const callLogs = useSelector((state: RootState) => state.callLog.callLogs);
   const blockList = useSelector((state: RootState) => state.block.blockList );
-
-
   const [blockReasonModal, setBlockReasonModal] = useState<ItemCall | null>(null);
-  // const [blockNumber, setBlockNumber] = useState<BlockNumberItem | []>([]);
+
+  const toast = useToast();
+
+  const fetchCallLogs = async () => {
+    try {
+      const response = await DatabaseHelper.fetchCallLogs();
+      if (response.status) {
+        dispatch(addMultipleCallLogs(response.data));
+      }
+    } catch (error) {
+      console.error("fetchCallLogs :", error);
+    }
+  };
+
+  const removeCallLogByNumber = async (item: ItemCall) => {
+    try {
+      const response = await DatabaseHelper.removeCallLogByNumber(item.number);
+      console.log("removeCallLogByNumber :", response)
+      if (response.status) {
+        dispatch(removeCallLog(item.number));
+      }
+    } catch (error) {
+      console.error("fetchCallLogs :", error);
+    }
+  };
 
   const openBlockReasonModal = (item: ItemCall) => {
     setBlockReasonModal(item);
@@ -98,26 +119,40 @@ const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpe
     setBlockReasonModal(null);
   };
 
-  // const fetchBlockNumberAll = async()=>{
-  //   try {
-  //     const response = await DatabaseHelper.getBlockNumberAllData();
-  //     console.log("response :", response);
-
-  //     if(response.status){
-  //       setBlockNumber(response.data)
-  //     }
-  //   } catch (error ) {
-  //     console.error("useEffect : ", error);
-  //   }
-  // }
-
-  // useEffect(()=>{
-  //   // fetchBlockNumberAll()
-  // }, [])
-
-  // useEffect(()=>{
-  //   console.log("blockNumber :", blockNumber)
-  // }, [blockNumber])
+  const handleUnblock = async(data: ItemCall) =>{
+    try {
+      if(data.number){
+        const response = await DatabaseHelper.deleteBlockNumberData(data.number);
+        console.log("response :", response);
+        if(response.status){
+          dispatch(removeBlock(data.number))
+  
+          toast.show("Unblock.", {
+            type: "normal",
+            placement: "bottom",
+            duration: 4000,
+            animationType: "slide-in",
+          });
+        }
+        // fetchBlockNumberAll();
+        closeMenu();
+      }
+    } catch (error ) {
+      if(error instanceof Error){
+        toast.show(error.message, {
+          type: "danger",
+          placement: "bottom",
+          duration: 4000,
+          animationType: "slide-in",
+          style: {
+            zIndex: 100, // Adjust the zIndex value as needed
+          },
+        });
+      }else{
+        console.error("Error fetching call logs:", error);
+      }
+    }
+  }
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -140,15 +175,12 @@ const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpe
   };
 
   const renderItem = useCallback(({ item }: { item: CallLog }) => {
-  // const renderItem = async ({ item }: { item: CallLog }) => {
     const itemCall: ItemCall = item.callLogs[0];
-
     return (
       <TouchableOpacity
         style={styles.itemContainer}
         onPress={() => { navigation.navigate("CallLogsDetail", { itemId: itemCall.number }); }}
-        onLongPress={() => Alert.alert("onLongPress")}
-      >
+        onLongPress={() => Alert.alert("onLongPress")}>
         <View style={styles.avatarContainer}>
           {
           itemCall.photoUri
@@ -156,19 +188,13 @@ const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpe
             : <Icon name="account" size={30} />
           }
           {
-          _.find(blockList, (v: BlockNumberItem)=>{
-            // console.log(">> ", v.PHONE_NUMBER," | " ,item.number, v.PHONE_NUMBER === item.number)
-            if(v.PHONE_NUMBER === item.number) return true;
-            return false
-          }) 
+            _.find(blockList, (v: BlockNumberItem)=>v.PHONE_NUMBER === item.number) 
             ? <TouchableOpacity style={styles.addIconContainer}>
                 <Icon name="cancel" size={30} color="red" />
               </TouchableOpacity> 
             : "" 
           }
         </View>
-
-
         <View style={styles.detailsContainer}>
           <Text style={styles.name}>{itemCall.name}</Text>
           <Text style={styles.phone}>{item.number}</Text>
@@ -181,13 +207,22 @@ const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpe
               <TouchableOpacity onPress={() => openMenu(item.number)}>
                 <Icon name="dots-vertical" size={24} color="#555" />
               </TouchableOpacity>
-            }
-          >
-            <Menu.Item 
+            }>
+            { 
+              _.find(blockList, (v: BlockNumberItem)=>v.PHONE_NUMBER === item.number) 
+              ? <Menu.Item 
+              onPress={() => { handleUnblock(itemCall) }} title="Unblock" />
+              : <Menu.Item 
               onPress={() => {
                 openBlockReasonModal(itemCall);
                 closeMenu();
               }} title="Block" />
+            }
+            <Menu.Item 
+              onPress={() => {
+                removeCallLogByNumber(itemCall);
+                closeMenu();
+              }} title="Delete" />
           </Menu>
           <View style={styles.timeAndIconContainer}>
             {renderItemCall(itemCall.type)}
@@ -196,16 +231,15 @@ const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpe
         </View>
       </TouchableOpacity>
     );
-  // }
   }, [visibleMenuId, blockList]);
 
   return (
-    <>
+    <View style={styles.container}>
       {callLogs.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Icon name="phone" size={100} color="#ccc" />
+        <TouchableOpacity style={styles.emptyContainer} onPress={()=>fetchCallLogs()}>
+          <Icon name="phone" size={80} color="#ccc" />
           <Text style={styles.emptyText}>No call logs available</Text>
-        </View>
+        </TouchableOpacity>
       ) : (
         <FlatList
           data={callLogs}
@@ -222,11 +256,15 @@ const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpe
       {blockReasonModal && (
         <BlockReasonModal visible={true} phoneNumber={blockReasonModal.number} onClose={closeBlockReasonModal} />
       )}
-    </>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -240,7 +278,7 @@ const styles = StyleSheet.create({
     borderRadius: 35,
     backgroundColor: '#eee',
     marginRight: 15,
-    position: 'relative', // Add this to allow absolute positioning of the add icon
+    position: 'relative', 
   },
   image: {
     width: '100%',
@@ -251,9 +289,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -5,
     right: -5,
-    // backgroundColor: '#007AFF',
     borderRadius: 15,
-    // padding: 4,
   },
   detailsContainer: {
     flex: 1,

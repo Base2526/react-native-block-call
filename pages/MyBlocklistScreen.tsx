@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useLayoutEffect } from 'react';
+import React, { useCallback, useState, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, 
         TouchableOpacity, Alert, Image, 
         RefreshControl, FlatList, NativeModules } from 'react-native';
@@ -9,13 +9,11 @@ import { useToast } from "react-native-toast-notifications";
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 
 import { RootState, AppDispatch } from '../redux/store';
-import { CallLog, ItemCall } from "../redux/interface";
 import { formatDate } from "../utils";
-import BlockReasonModal from './BlockReasonModal'; 
 import TabIconWithMenu from "../TabIconWithMenu"
 import { BlockItem } from "../redux/interface"
 
-import { removeBlock } from "../redux/slices/blockSlice";
+import { addBlocks, removeBlock } from "../redux/slices/blockSlice";
 
 const { DatabaseHelper } = NativeModules;
 
@@ -48,9 +46,9 @@ const MyBlocklistScreen: React.FC<MyBlocklistScreenProps> = ({ navigation, route
       ),
       headerRight: () => (
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => {  onRefresh()  }} style={{marginRight: 5}}>
+          {/* <TouchableOpacity onPress={() => {  onRefresh()  }} style={{marginRight: 5}}>
             <Icon name="reload" size={24} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TabIconWithMenu 
             iconName="dots-vertical"
             menuItems={[
@@ -63,36 +61,24 @@ const MyBlocklistScreen: React.FC<MyBlocklistScreenProps> = ({ navigation, route
     });
   }, [navigation, route]);
   
+  const dispatch: AppDispatch = useDispatch();
   const [refreshing, setRefreshing] = useState(false);
   const [visibleMenuId, setVisibleMenuId] = useState<string | null>(null);
-
-  // const [datas, setDatas] = useState<BlockItem[] | []>([])
-
   const openMenu = (id: string) => setVisibleMenuId(id);
   const closeMenu = () => setVisibleMenuId(null);
-
-  const dispatch: AppDispatch = useDispatch();
-  const callLogs = useSelector((state: RootState) => state.callLog.callLogs);
-
-  const [isModalVisible, setModalVisible] = useState(false);
-  const openModal = () => setModalVisible(true);
-  const closeModal = () => setModalVisible(false);
-
   const blockList = useSelector((state: RootState) => state.block.blockList );
-
   const toast = useToast();
 
-  // const fetchBlockNumberAll = async()=>{
-  //   try {
-  //     const response = await DatabaseHelper.getBlockNumberAllData();
-  //     console.log("response :", response);
-  //     if(response.status){
-  //       setDatas(response.data)
-  //     }
-  //   } catch (error ) {
-  //     console.error("useEffect : ", error);
-  //   }
-  // }
+  const fetchBlockList = async()=>{
+    try {
+      const response = await DatabaseHelper.getBlockNumberAllData();
+      if(response.status){
+        dispatch(addBlocks(response.data))
+      }
+    } catch (error ) {
+      console.error("fetchBlockList : ", error);
+    }
+  }
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -100,37 +86,24 @@ const MyBlocklistScreen: React.FC<MyBlocklistScreenProps> = ({ navigation, route
     setRefreshing(false);
   }, []);
 
-  const renderItemCall = (type: string) => {
-    switch (type) {
-      case "1":
-        return <Icon name="call-received" size={17} color="#007AFF" style={styles.icon} />;
-      case "2":
-        return <Icon name="call-made" size={17} color="#007AFF" style={styles.icon} />;
-      case "3":
-        return <Icon name="call-missed" size={17} color="red" style={styles.icon} />;
-      case "4":
-        return <Icon name="phone-outline" size={17} color="#007AFF" style={styles.icon} />;
-      case "5":
-        return <Icon name="call-split" size={17} color="#007AFF" style={styles.icon} />;
-    }
-  };
-
   const handleUnblock = async(data: BlockItem) =>{
     try {
-      const response = await DatabaseHelper.deleteBlockNumberData(data.ID);
-      console.log("response :", response);
-      if(response.status){
-        dispatch(removeBlock(data.ID))
-
-        toast.show("Unblock.", {
-          type: "normal",
-          placement: "bottom",
-          duration: 4000,
-          animationType: "slide-in",
-        });
+      if(data.PHONE_NUMBER){
+        const response = await DatabaseHelper.deleteBlockNumberData(data.PHONE_NUMBER);
+        console.log("response :", response);
+        if(response.status){
+          dispatch(removeBlock(data.PHONE_NUMBER))
+  
+          toast.show("Unblock.", {
+            type: "normal",
+            placement: "bottom",
+            duration: 4000,
+            animationType: "slide-in",
+          });
+        }
+        // fetchBlockNumberAll();
+        closeMenu();
       }
-      // fetchBlockNumberAll();
-      closeMenu();
     } catch (error ) {
       if(error instanceof Error){
         toast.show(error.message, {
@@ -149,7 +122,6 @@ const MyBlocklistScreen: React.FC<MyBlocklistScreenProps> = ({ navigation, route
   }
 
   const renderItem = useCallback(({ item }: { item: BlockItem }) => {
-    // const itemCall: ItemCall = item.callLogs[0];
     return (
       <TouchableOpacity
         style={styles.itemContainer}
@@ -191,10 +163,10 @@ const MyBlocklistScreen: React.FC<MyBlocklistScreenProps> = ({ navigation, route
     <View style={styles.container}>
       {
         blockList.length === 0 ? (
-          <View style={styles.emptyContainer}>
+          <TouchableOpacity style={styles.emptyContainer} onPress={()=>{fetchBlockList()}}>
             <Icon name="file-document-outline" size={80} color="#ccc" />
             <Text style={styles.emptyText}>No Call Logs Found</Text>
-          </View>
+          </TouchableOpacity>
         ) : (
           <FlatList
             data={blockList}
@@ -208,9 +180,6 @@ const MyBlocklistScreen: React.FC<MyBlocklistScreenProps> = ({ navigation, route
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           />
         )
-      }
-      {
-        // isModalVisible && <BlockReasonModal visible={isModalVisible} onClose={closeModal} />
       }
     </View>
   );

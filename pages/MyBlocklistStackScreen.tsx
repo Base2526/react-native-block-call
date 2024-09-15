@@ -8,11 +8,13 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 
 import TabIconWithMenu from "../TabIconWithMenu"
 import SettingsScreen from "./SettingsScreen";
+import CallLogsDetailScreen from "./CallLogsDetailScreen";
 import HelpSendFeedbackScreen from "./HelpSendFeedbackScreen";
 import AboutScreen from './AboutScreen';
 import ProfileScreen from "./ProfileScreen";
 import DrawerContent from "../DrawerContent";
 import MyBlocklist from './MyBlocklistScreen';
+import PrivatePolicy from "./PrivatePolicy"
 
 const MyBlocklistStack = createStackNavigator();
 
@@ -31,7 +33,8 @@ const MyBlocklistStackScreen: React.FC<MyBlocklistStackScreenProps> = ({ navigat
           routeName === "SMSDetail" ||
           routeName === "Settings" ||
           routeName === 'HelpSendFeedback' ||  
-          routeName === 'About'
+          routeName === 'About'||
+          routeName === 'Policy'
       ) {
       navigation.setOptions({ tabBarStyle: { display: 'none' } });
     } else {
@@ -75,6 +78,14 @@ const MyBlocklistStackScreen: React.FC<MyBlocklistStackScreenProps> = ({ navigat
             }}
           />
           <MyBlocklistStack.Screen
+            name="Policy"
+            component={PrivatePolicy}
+            options={{  
+              headerTitle: 'Private policy', 
+              headerShown: true, 
+            }}
+          />
+          <MyBlocklistStack.Screen
             name="About"
             component={AboutScreen}
             options={{  
@@ -90,6 +101,14 @@ const MyBlocklistStackScreen: React.FC<MyBlocklistStackScreenProps> = ({ navigat
               headerTitle: 'Profile', 
             }}
           />
+          <MyBlocklistStack.Screen
+              name="CallLogsDetail"
+              component={CallLogsDetailScreen}
+              options={{  
+                headerTitle: '', 
+                headerShown: true, 
+              }}
+            />
       </MyBlocklistStack.Navigator>
       <DrawerContent isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} navigation={navigation} />
     </>

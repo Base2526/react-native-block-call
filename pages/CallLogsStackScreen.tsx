@@ -17,6 +17,8 @@ import ProfileScreen from "./ProfileScreen";
 import DrawerContent from "../DrawerContent";
 import SMSDetailScreen from './SMSDetailScreen';
 
+import PrivatePolicy from './PrivatePolicy';
+
 type CallLogsStackScreenProps = {
     navigation: NavigationProp<any>;
     route: RouteProp<any, any>;
@@ -35,7 +37,8 @@ const CallLogsStackScreen: React.FC<CallLogsStackScreenProps> = ({ navigation, r
             routeName === 'Settings' ||
             routeName === 'HelpSendFeedback' || 
             routeName === 'About' ||
-            routeName === 'SMSDetail'
+            routeName === 'SMSDetail' ||
+            routeName === 'Policy'
           ) {
         navigation.setOptions({ tabBarStyle: { display: 'none' } });
       } else {
@@ -96,10 +99,10 @@ const CallLogsStackScreen: React.FC<CallLogsStackScreenProps> = ({ navigation, r
               }}
             />
             <CallLogsStack.Screen
-              name="HelpSendFeedback"
-              component={HelpSendFeedbackScreen}
+              name="Policy"
+              component={PrivatePolicy}
               options={{  
-                headerTitle: 'Help & SendFeedback', 
+                headerTitle: 'Private policy', 
                 headerShown: true, 
               }}
             />

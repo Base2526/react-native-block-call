@@ -12,12 +12,11 @@ const { DatabaseHelper } = NativeModules;
 
 const CallLogsDetailScreen: React.FC<any> = ({ route, navigation }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const callLogs = useSelector((state: RootState) => state.callLog.callLogs);
-
   const [isModalVisible, setModalVisible] = useState(false);
   const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
 
+  const callLogs = useSelector((state: RootState) => state.callLog.callLogs);
   let callLogDetail: CallLog | undefined = callLogs.find(callLog => callLog.number === route.params.itemId);
 
   if (!callLogDetail) return null;

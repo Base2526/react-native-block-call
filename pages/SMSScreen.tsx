@@ -1,25 +1,22 @@
 import React, { useState, useLayoutEffect} from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, RefreshControl, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, RefreshControl, FlatList, NativeModules } from 'react-native';
 import _ from "lodash";
-import { useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; 
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import { useSelector, useDispatch } from 'react-redux';
 
-import { RootState } from '../redux/store';
+import { RootState, AppDispatch } from '../redux/store';
 import { SmsLog, ItemSms } from "../redux/interface"
 import * as utils from "../utils"
 import TabIconWithMenu from "../TabIconWithMenu"
+import { addMultipleSmsLogs } from '../redux/slices/smslogSlice';
+
+const { DatabaseHelper } = NativeModules;
 
 type SMSProps = {
   navigation: any;
   route: any;
-  setMenuOpen: () => void; // Define the function prop
-};
-
-const findLastUpdatedSmsLog = (logs: ItemSms[]): ItemSms => {
-  return logs.reduce((latest, current) => {
-      return (latest === null || Number(current.date) > Number(latest.date)) ? current : latest;
-  });
+  setMenuOpen: () => void; 
 };
 
 const SMSScreen: React.FC<SMSProps> = ({ navigation, route, setMenuOpen }) => {
@@ -64,14 +61,31 @@ const SMSScreen: React.FC<SMSProps> = ({ navigation, route, setMenuOpen }) => {
 
   }, [navigation, route]);
 
+  const dispatch: AppDispatch = useDispatch();
   const [refreshing, setRefreshing] = useState(false); 
-  const [visibleMenuId, setVisibleMenuId] = useState<string | null>(null);
 
   const smsLogs = useSelector((state: RootState) => state.smsLog.smsLogs);
+
+  const fetchSmsLogs = async () => {
+    try {
+      const response = await DatabaseHelper.fetchSmsLogs();      
+      if (response.status) {
+        dispatch(addMultipleSmsLogs(response.data));
+      }
+    } catch (error) {
+      console.error("Error fetching sms logs:", error);
+    }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
     setRefreshing(false);
+  };
+
+  const findLastUpdatedSmsLog = (logs: ItemSms[]): ItemSms => {
+    return logs.reduce((latest, current) => {
+        return (latest === null || Number(current.date) > Number(latest.date)) ? current : latest;
+    });
   };
 
   const renderItem = ({ item }: { item: SmsLog }) => {
@@ -110,29 +124,44 @@ const SMSScreen: React.FC<SMSProps> = ({ navigation, route, setMenuOpen }) => {
 
   if (_.isEmpty(smsLogs)) {
     return (
-      <View style={styles.emptyContainer}>
-        <Icon name="message-off" size={100} color="#ccc" />
+      <TouchableOpacity style={styles.emptyContainer} onPress={()=>fetchSmsLogs()}>
+        <Icon name="message-off" size={80} color="#ccc" />
         <Text style={styles.emptyText}>No SMS Logs available</Text>
-      </View>
+      </TouchableOpacity>
     );
   }
 
   return (
-    <FlatList
-      data={smsLogs}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.address}
-      initialNumToRender={10}
-      windowSize={5}
-      removeClippedSubviews={true}
-      maxToRenderPerBatch={10}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    />
+      <View style={styles.container}>
+        {
+        smsLogs.length === 0 ? (
+          <TouchableOpacity style={styles.emptyContainer} onPress={()=>{fetchSmsLogs()}}>
+            <Icon name="message-off" size={80} color="#ccc" />
+            <Text style={styles.emptyText}>No SMS Logs available</Text>
+          </TouchableOpacity>
+        ) : (
+          <FlatList
+            data={smsLogs}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.address}
+            initialNumToRender={10}
+            windowSize={5}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          />
+        )
+      }
+</View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',

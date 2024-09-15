@@ -15,8 +15,23 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import android.provider.Settings;
+import android.util.Log;
 
 public class Utils {
+    public static boolean isDeveloperModeEnabled(Context context) {
+        try {
+            int developerModeEnabled = Settings.Global.getInt(
+                    context.getContentResolver(),
+                    Settings.Global.DEVELOPMENT_SETTINGS_ENABLED,
+                    0
+            );
+            return developerModeEnabled == 1;
+        } catch (Exception e) {
+            Log.e("DeveloperModeChecker", "Setting not found", e);
+            return false;
+        }
+    }
 
     public static ContactInfo getContactInfo(Context context, String phoneNumber) {
         String contactName = "Unknown";

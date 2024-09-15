@@ -37,10 +37,15 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void isDeveloperModeEnabled(Promise promise) {
+        boolean isEnabled = Utils.isDeveloperModeEnabled(getReactApplicationContext());
+        promise.resolve(isEnabled);
+    }
+
+    @ReactMethod
     public void addBlockNumberData(ReadableMap itemMap, Promise promise) {
         long startTime = System.currentTimeMillis();
         try {
-            Log.i(TAG, itemMap.toString());
             String phoneNumber = itemMap.getString("PHONE_NUMBER");
             // Check if the phone number already exists in the database
             if (databaseHelper.isPhoneNumberExists(phoneNumber)) {
@@ -150,10 +155,10 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void deleteBlockNumberData(String id, Promise promise) {
+    public void deleteBlockNumberData(String phoneNumber, Promise promise) {
         long startTime = System.currentTimeMillis();
         try {
-            Integer result = databaseHelper.deleteBlockNumberData(id);
+            Integer result = databaseHelper.deleteBlockNumberData(phoneNumber);
 //            promise.resolve(result);
 
             long endTime = System.currentTimeMillis();
@@ -437,4 +442,34 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
             promise.reject("ERROR", e);
         }
     }
+
+    @ReactMethod
+    public void removeCallLogByNumber(String phoneNumber, Promise promise) {
+        long startTime = System.currentTimeMillis();
+        try {
+            ContentResolver contentResolver = getReactApplicationContext().getContentResolver();
+            Uri callUri = CallLog.Calls.CONTENT_URI;
+
+            String where = CallLog.Calls.NUMBER + "=?";
+            String[] selectionArgs = { phoneNumber };
+
+            int rowsDeleted = contentResolver.delete(callUri, where, selectionArgs);
+
+            if (rowsDeleted > 0) {
+//                promise.resolve("Deleted " + rowsDeleted + " call log entries for " + phoneNumber);
+
+                long endTime = System.currentTimeMillis();
+                long executionTime = endTime - startTime;
+                promise.resolve(Utils.createResponseInt(true, executionTime,  rowsDeleted, ""));
+            } else {
+                promise.reject("Error", "No call logs found for the given phone number.");
+            }
+        } catch (SecurityException e) {
+            promise.reject("PermissionError", "You do not have the necessary permissions.");
+        } catch (Exception e) {
+            Log.e(TAG, "Error removing call log", e);
+            promise.reject("Error", e.getMessage());
+        }
+    }
+
 }

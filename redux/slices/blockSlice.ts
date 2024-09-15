@@ -55,7 +55,7 @@ const blockListSlice = createSlice({
 
     // Remove a block item by ID
     removeBlock: (state, action: PayloadAction<string>) => {
-      state.blockList = state.blockList.filter(item => item.ID !== action.payload);
+      state.blockList = state.blockList.filter(item => item.PHONE_NUMBER !== action.payload);
     },
 
     // Clear all block items

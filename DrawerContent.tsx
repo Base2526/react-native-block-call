@@ -70,7 +70,7 @@ const DrawerContent: React.FC<MenuProps> = ({ isOpen, onClose, navigation }) => 
               </View>
             </TouchableOpacity>
             
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
               style={styles.drawerItem}
               onPress={() =>{
                 navigation.navigate('HelpSendFeedback');
@@ -79,12 +79,12 @@ const DrawerContent: React.FC<MenuProps> = ({ isOpen, onClose, navigation }) => 
               <Icon name="question" size={20} style={{padding: 10}} />
               <Text style={styles.drawerItemText}>Help & Send Feedback</Text>
             </TouchableOpacity>
-            <Divider />
+            <Divider /> */}
             <TouchableOpacity 
               style={styles.drawerItem}
               onPress={() =>{
-                // navigation.navigate('HelpSendFeedback');
-                // onClose();
+                navigation.navigate('Policy');
+                onClose();
               }}>
               <Icon name="user-shield" size={20} style={{padding: 10}} />
               <Text style={styles.drawerItemText}>Private policy</Text>
@@ -96,7 +96,7 @@ const DrawerContent: React.FC<MenuProps> = ({ isOpen, onClose, navigation }) => 
                 navigation.navigate('About');
                 onClose();
               }}>
-              <Icon name="info" size={20} style={{padding: 10}} />
+              <Icon name="question" size={20} style={{padding: 10}} />
               <Text style={styles.drawerItemText}>About</Text>
             </TouchableOpacity>
             <Divider />
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     zIndex: 1000,
     justifyContent: 'flex-start',
-    position: 'absolute',  // Ensures overlay is positioned on top
+    position: 'absolute', 
     top: 0,
     left: 0,
   },
@@ -129,12 +129,11 @@ const styles = StyleSheet.create({
   profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
-    // padding: 16, // Optional: Add padding to the profileSection
+    marginBottom: 20
   },
   profileInfo: {
     flex: 1,
-    justifyContent: 'center', // Center profile info vertically
+    justifyContent: 'center'
   },
   profileName: {
     fontSize: 18,
@@ -151,7 +150,7 @@ const styles = StyleSheet.create({
     width: '70%',
     height: '100%',
     backgroundColor: 'white',
-    // borderRightWidth: 1,
+    borderRightWidth: .5,
     borderColor: '#ccc',
     zIndex: 1000,
     padding: 16,
@@ -159,7 +158,8 @@ const styles = StyleSheet.create({
   drawerItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
+    // paddingVertical: 15,
+    padding: 10
   },
   drawerItemText: {
     marginLeft: 15,

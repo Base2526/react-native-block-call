@@ -17,6 +17,8 @@ import SMSScreen from './SMSScreen';
 import SMSDetailScreen from './SMSDetailScreen';
 import SearchScreen from "./SearchScreen";
 
+import PrivatePolicy from "./PrivatePolicy"
+
 const SMSStack = createStackNavigator();
 
 type SMSStackScreenProps = {
@@ -35,7 +37,8 @@ const SMSStackScreen: React.FC<SMSStackScreenProps> = ({ navigation, route }) =>
             routeName === 'Settings' ||
             routeName === 'HelpSendFeedback' ||  
             routeName === 'Search' ||
-            routeName ==='About') {
+            routeName ==='About' ||
+            routeName === 'Policy') {
         navigation.setOptions({ tabBarStyle: { display: 'none' } });
       } else {
         navigation.setOptions({ tabBarStyle: { display: 'flex' } });
@@ -113,6 +116,14 @@ const SMSStackScreen: React.FC<SMSStackScreenProps> = ({ navigation, route }) =>
               headerShown: true,
               headerTitle: 'Help & SendFeedback', 
             }}/>
+          <SMSStack.Screen
+            name="Policy"
+            component={PrivatePolicy}
+            options={{  
+              headerTitle: 'Private policy', 
+              headerShown: true, 
+            }}
+          />
           <SMSStack.Screen
             name="About"
             component={AboutScreen}
