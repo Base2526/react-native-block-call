@@ -44,7 +44,6 @@ const SMSStackScreen: React.FC<SMSStackScreenProps> = ({ navigation, route }) =>
         navigation.setOptions({ tabBarStyle: { display: 'flex' } });
       }
   
-      // console.log("HomeStackScreen:", routeName);
       // navigation.setOptions({
       //   headerLeft: () => (
       //     <TouchableOpacity onPress={() => { setIsMenuOpen(!isMenuOpen) }} style={styles.menuButton}>

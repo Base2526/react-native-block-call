@@ -13,7 +13,7 @@ import BlockReasonModal from './BlockReasonModal';
 import TabIconWithMenu from "../TabIconWithMenu"
 import { CallLog, ItemCall } from "../redux/interface";
 import { removeBlock } from "../redux/slices/blockSlice";
-import { addMultipleCallLogs, removeCallLog } from '../redux/slices/calllogSlice';
+import { addMultipleCallLogs, removeCallLog, clearCallLogs } from '../redux/slices/calllogSlice';
 
 const { DatabaseHelper } = NativeModules;
 
@@ -67,7 +67,7 @@ const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpe
           <TabIconWithMenu 
             iconName="dots-vertical"
             menuItems={[
-              { label: 'Clear all', onPress: () => console.log('Item 1 pressed') },
+              { label: 'Clear all', onPress: () => removeAllCallLog() },
             ]}/>
         </View>
       ),
@@ -105,6 +105,18 @@ const CallLogsScreen: React.FC<CallLogsProps> = ({ navigation, route, setMenuOpe
       console.log("removeCallLogByNumber :", response)
       if (response.status) {
         dispatch(removeCallLog(item.number));
+      }
+    } catch (error) {
+      console.error("fetchCallLogs :", error);
+    }
+  };
+
+  const removeAllCallLog = async() => {
+    try {
+      const response = await DatabaseHelper.removeAllCallLog();
+      console.log("removeAllCallLog :", response)
+      if (response.status) {
+        dispatch(clearCallLogs());
       }
     } catch (error) {
       console.error("fetchCallLogs :", error);

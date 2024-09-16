@@ -11,6 +11,10 @@ Debug APK
 step
  - cd android & ./gradlew assembleDebug & yourProject/android/app/build/outputs/apk/debug/app-debug.apk
 
+ Debug APK
+step
+ - cd android & ./gradlew assembleRelease & yourProject/android/app/build/outputs/apk/release/app-release.apk
+
 Debug real device with wifi
 Error : Could not connect to React Native development server on Android
 - Open the in-app Developer menu.

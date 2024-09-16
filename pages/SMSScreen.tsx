@@ -4,12 +4,13 @@ import _ from "lodash";
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; 
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
+import { Menu, Divider } from 'react-native-paper';
 
 import { RootState, AppDispatch } from '../redux/store';
 import { SmsLog, ItemSms } from "../redux/interface"
 import * as utils from "../utils"
 import TabIconWithMenu from "../TabIconWithMenu"
-import { addMultipleSmsLogs } from '../redux/slices/smslogSlice';
+import { addMultipleSmsLogs, removeSmsLog, clearSmsLogs } from '../redux/slices/smslogSlice';
 
 const { DatabaseHelper } = NativeModules;
 
@@ -35,7 +36,6 @@ const SMSScreen: React.FC<SMSProps> = ({ navigation, route, setMenuOpen }) => {
       navigation.setOptions({ tabBarStyle: { display: 'flex' } });
     }
 
-    console.log("HomeStackScreen:", routeName);
     navigation.setOptions({
       headerLeft: () => (
         <TouchableOpacity onPress={() => { setMenuOpen() }} style={styles.menuButton}>
@@ -49,10 +49,18 @@ const SMSScreen: React.FC<SMSProps> = ({ navigation, route, setMenuOpen }) => {
             onPress={()=>{ navigation.navigate("Search") }}>
             <Icon name="magnify" size={25} color="#333" />
           </TouchableOpacity>
+          {/* <TouchableOpacity 
+            style={{ padding:5, marginRight: 5 }} 
+            onPress={()=>{ 
+
+              isAvailableSmsRole()
+            }}>
+            <Icon name="access-point" size={25} color="#333" />
+          </TouchableOpacity> */}
           <TabIconWithMenu 
             iconName="dots-vertical"
             menuItems={[
-              { label: 'Clear all', onPress: () => console.log('Item 1 pressed') },
+              { label: 'Clear all', onPress: () => removeAllSms() },
             ]}/>
         </View>
       ),
@@ -61,10 +69,53 @@ const SMSScreen: React.FC<SMSProps> = ({ navigation, route, setMenuOpen }) => {
 
   }, [navigation, route]);
 
+  const [visibleMenuId, setVisibleMenuId] = useState<string | null>(null);
+  const openMenu = (id: string) => setVisibleMenuId(id);
+  const closeMenu = () => setVisibleMenuId(null);
+
   const dispatch: AppDispatch = useDispatch();
   const [refreshing, setRefreshing] = useState(false); 
 
   const smsLogs = useSelector((state: RootState) => state.smsLog.smsLogs);
+
+  const requestDefaultSmsRole = async (address :string) => {
+    try {
+      if(!await DatabaseHelper.isAvailableSmsRole()){
+        const response = await DatabaseHelper.requestDefaultSmsRole();    
+        console.info("requestDefaultSmsRole :", response);  
+        if (response.status) {
+          // dispatch(addMultipleSmsLogs(response.data));
+        }
+      }else{
+        removeSmsByAddress(address)
+      }
+    } catch (error) {
+      console.error("requestDefaultSmsRole :", error);
+    }
+  };
+
+  // const isAvailableSmsRole = async () => {
+  //   try {
+  //     const response = await DatabaseHelper.isAvailableSmsRole();    
+  //     console.info("isAvailableSmsRole :", response);  
+  //     if (response.status) {
+  //       // dispatch(addMultipleSmsLogs(response.data));
+  //     }
+  //   } catch (error) {
+  //     console.error("isAvailableSmsRole :", error);
+  //   }
+  // };
+
+  const removeAllSms = async () => {
+    try {
+      const response = await DatabaseHelper.removeAllSms();      
+      if (response.status) {
+        dispatch(clearSmsLogs());
+      }
+    } catch (error) {
+      console.error("Error fetching sms logs:", error);
+    }
+  };
 
   const fetchSmsLogs = async () => {
     try {
@@ -74,6 +125,18 @@ const SMSScreen: React.FC<SMSProps> = ({ navigation, route, setMenuOpen }) => {
       }
     } catch (error) {
       console.error("Error fetching sms logs:", error);
+    }
+  };
+
+  const removeSmsByAddress = async (address: string) => {
+    try {
+      const response = await DatabaseHelper.removeSmsByAddress(address);
+      console.log("removeSmsByAddress :", response)
+      if (response.status) {
+        dispatch(removeSmsLog(address));
+      }
+    } catch (error) {
+      console.error("removeSmsByAddress :", error);
     }
   };
 
@@ -111,6 +174,20 @@ const SMSScreen: React.FC<SMSProps> = ({ navigation, route, setMenuOpen }) => {
           <Text style={styles.note}>{lastMessage.body}</Text>
         </View>
         <View style={styles.timeContainer}>
+          <Menu
+            visible={visibleMenuId === item.address}
+            onDismiss={closeMenu}
+            anchor={
+              <TouchableOpacity onPress={() => openMenu(item.address)}>
+                <Icon name="dots-vertical" size={24} color="#555" />
+              </TouchableOpacity>
+            }>
+            <Menu.Item 
+              onPress={() => {
+                requestDefaultSmsRole(lastMessage.address)
+                closeMenu();
+              }} title="Delete" />
+          </Menu>
           <Text style={styles.time}>{utils.getDate(Number(lastMessage.date))}</Text>
           {!_.isEmpty(callCount) && (
             <View style={styles.callCountContainer}>
@@ -121,15 +198,6 @@ const SMSScreen: React.FC<SMSProps> = ({ navigation, route, setMenuOpen }) => {
       </TouchableOpacity>
     );
   };
-
-  if (_.isEmpty(smsLogs)) {
-    return (
-      <TouchableOpacity style={styles.emptyContainer} onPress={()=>fetchSmsLogs()}>
-        <Icon name="message-off" size={80} color="#ccc" />
-        <Text style={styles.emptyText}>No SMS Logs available</Text>
-      </TouchableOpacity>
-    );
-  }
 
   return (
       <View style={styles.container}>

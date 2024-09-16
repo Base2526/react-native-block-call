@@ -1,5 +1,6 @@
 package com.blockcall.architecture;
 
+import com.blockcall.MainActivity;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -11,24 +12,50 @@ import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 
 import android.content.ContentResolver;
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.CallLog;
 import android.telephony.SmsManager;
 import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import android.provider.Telephony;
+import android.app.role.RoleManager;
+import android.content.Intent;
+import android.os.Build;
+import android.app.Activity;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
 public class DatabaseModule extends ReactContextBaseJavaModule {
     private static String TAG = DatabaseHelper.class.getName();
+    private static final int REQUEST_CODE_DEFAULT_SMS = 101;
     private final DatabaseHelper databaseHelper;
 
+    private final ReactApplicationContext reactContext;
+    private ActivityResultLauncher<Intent> roleRequestLauncher;
     public DatabaseModule(ReactApplicationContext reactContext) {
         super(reactContext);
         databaseHelper = new DatabaseHelper(reactContext);
+
+        this.reactContext = reactContext;
+
+//        Activity currentActivity = getCurrentActivity();
+//        if (currentActivity != null) {
+//            roleRequestLauncher = currentActivity.registerForActivityResult(
+//                    new ActivityResultContracts.StartActivityForResult(),
+//                    result -> {
+//                        if (result.getResultCode() == REQUEST_CODE_DEFAULT_SMS) {
+//                            Log.i(TAG, "Successfully became the default SMS app");
+//                        } else {
+//                            Log.e(TAG, "Failed to become the default SMS app");
+//                        }
+//                    }
+//            );
+//        }
     }
 
     @Override
@@ -259,6 +286,76 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void fetchCallLogByNumber(String phoneNumber, Promise promise) {
+        long startTime = System.currentTimeMillis();
+        try {
+            Uri callLogUri = Uri.parse("content://call_log/calls");
+            ContentResolver contentResolver = getReactApplicationContext().getContentResolver();
+
+            // Modify the selection query to filter by the provided phone number
+            String selection = CallLog.Calls.NUMBER + "=?";
+            String[] selectionArgs = new String[]{phoneNumber};
+
+            Cursor cursor = contentResolver.query(callLogUri, null, selection, selectionArgs, null);
+
+            if (cursor != null) {
+                // Use a HashMap to group call logs by phone number
+                HashMap<String, WritableArray> groupedCallLogs = new HashMap<>();
+
+                while (cursor.moveToNext()) {
+                    String id = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls._ID));
+                    String number = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.NUMBER));
+                    String type = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE));
+                    String date = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.DATE));
+
+                    // Fetch contact name and photo associated with the number
+                    ContactInfo contactInfo = Utils.getContactInfo(getReactApplicationContext(), number);
+
+                    // Create a WritableMap for each CallItem
+                    WritableMap callItem = Arguments.createMap();
+                    callItem.putString("id", id);
+                    callItem.putString("name", contactInfo.name);
+                    callItem.putString("photoUri", contactInfo.photoUri);
+                    callItem.putString("number", number);
+                    callItem.putString("type", type);
+                    callItem.putString("date", date);
+
+                    // Check if the number is already in the grouped map
+                    if (!groupedCallLogs.containsKey(number)) {
+                        groupedCallLogs.put(number, Arguments.createArray());
+                    }
+
+                    // Add the call item to the corresponding group in the HashMap
+                    groupedCallLogs.get(number).pushMap(callItem);
+                }
+
+                cursor.close();
+
+                // Create a WritableArray to return the grouped call logs
+                WritableArray groupedCallList = Arguments.createArray();
+
+                for (Map.Entry<String, WritableArray> entry : groupedCallLogs.entrySet()) {
+                    WritableMap group = Arguments.createMap();
+                    group.putString("number", entry.getKey());
+                    group.putArray("callLogs", entry.getValue());
+                    groupedCallList.pushMap(group);
+                }
+
+                long endTime = System.currentTimeMillis();
+                long executionTime = endTime - startTime;
+                promise.resolve(Utils.createResponseArray(true, executionTime, groupedCallList, ""));
+            } else {
+                promise.resolve(Utils.createResponseArray(false, 0, null, "No call logs found for the number."));
+            }
+        } catch (Exception e) {
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.reject("LOGS_ERROR", e.getMessage());
+        }
+    }
+
+
+    @ReactMethod
     public void fetchSmsLogs(Promise promise) {
         long startTime = System.currentTimeMillis();
         try {
@@ -472,4 +569,130 @@ public class DatabaseModule extends ReactContextBaseJavaModule {
         }
     }
 
+    @ReactMethod
+    public void removeAllCallLog(Promise promise) {
+        long startTime = System.currentTimeMillis();
+        try {
+            ContentResolver contentResolver = getReactApplicationContext().getContentResolver();
+            Uri callUri = CallLog.Calls.CONTENT_URI;
+            int rowsDeleted = contentResolver.delete(callUri, null, null);
+            if (rowsDeleted > 0) {
+                long endTime = System.currentTimeMillis();
+                long executionTime = endTime - startTime;
+                promise.resolve(Utils.createResponseInt(true, executionTime,  rowsDeleted, ""));
+            } else {
+                promise.reject("Error", "No call logs found for the given phone number.");
+            }
+        } catch (SecurityException e) {
+            promise.reject("PermissionError", "You do not have the necessary permissions.");
+        } catch (Exception e) {
+            Log.e(TAG, "Error removing call log", e);
+            promise.reject("Error", e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void removeSmsByAddress(String address, Promise promise) {
+        long startTime = System.currentTimeMillis();
+
+        ContentResolver contentResolver = getReactApplicationContext().getContentResolver();
+        Uri smsUri = Uri.parse("content://sms/");
+        Cursor cursor = contentResolver.query(smsUri, null, Telephony.Sms.ADDRESS + " = ?", new String[]{address}, null);
+
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    long id = cursor.getLong(cursor.getColumnIndexOrThrow(Telephony.Sms._ID));
+                    int rowsDeleted = contentResolver.delete(Uri.parse("content://sms/" + id), null, null);
+
+                    if (rowsDeleted > 0) {
+                        Log.i(TAG, "Message deleted successfully, ID: " + id );
+
+                    } else {
+                        Log.i(TAG, "Failed to delete message, ID: " + id );
+                    }
+
+                } while (cursor.moveToNext());
+
+                long endTime = System.currentTimeMillis();
+                long executionTime = endTime - startTime;
+                promise.resolve(Utils.createResponseInt(true, executionTime,  1, ""));
+            }
+
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.resolve(Utils.createResponseInt(true, executionTime,  0, "No SMS found for the given address."));
+        } catch (Exception e) {
+            promise.reject("Error", e.getMessage());
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    @ReactMethod
+    public void removeAllSms(Promise promise){
+        long startTime = System.currentTimeMillis();
+
+        ContentResolver contentResolver = getReactApplicationContext().getContentResolver();
+        Uri smsUri = Uri.parse("content://sms/");
+
+        try {
+            // Attempt to delete all SMS messages
+            int deletedCount = contentResolver.delete(smsUri, null, null);
+            if (deletedCount > 0) {
+                System.out.println("Successfully deleted all SMS messages.");
+            } else {
+                System.out.println("No SMS messages to delete.");
+            }
+
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            promise.resolve(Utils.createResponseInt(true, executionTime,  1, ""));
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error deleting SMS messages. Ensure the app is set as the default SMS app.");
+
+            promise.reject("Error", e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void requestDefaultSmsRole(Promise promise) {
+        // Create an instance of ActivityResultLauncher
+        MainActivity activity = (MainActivity) getCurrentActivity();
+        if (activity != null) {
+            activity.requestDefaultSmsRole();
+        }
+    }
+
+    @ReactMethod
+    public void isAvailableSmsRole(Promise promise) {
+        long startTime = System.currentTimeMillis();
+        try {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    RoleManager roleManager = (RoleManager) getCurrentActivity().getSystemService(Context.ROLE_SERVICE);
+                    boolean isRoleAvailable = roleManager.isRoleAvailable(RoleManager.ROLE_SMS);
+
+                    if(isRoleAvailable){
+                        boolean isRoleHeld = roleManager.isRoleHeld(RoleManager.ROLE_SMS);
+                        promise.resolve(isRoleHeld);
+                    }
+                }else{
+                    String defaultSmsPackage = Telephony.Sms.getDefaultSmsPackage(reactContext);
+                    boolean isRoleAvailable = defaultSmsPackage != null && defaultSmsPackage.equals(reactContext.getPackageName());
+
+                    promise.resolve(isRoleAvailable);
+                }
+            } catch (Exception e) {
+                promise.reject("ROLE_CHECK_ERROR", "Failed to check SMS role", e);
+            }
+
+        } catch (Exception e) {
+            Log.e("isAvailableSmsRole",  e.getMessage() );
+            promise.reject("LOGS_ERROR",  e.getMessage());
+        }
+    }
 }

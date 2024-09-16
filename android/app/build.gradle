@@ -139,7 +139,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "0.0.2-beta"
+        versionName "0.0.1-beta"
         buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
 
         if (isNewArchitectureEnabled()) {
@@ -300,6 +300,10 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.7.0'
 
     implementation project(':react-native-splash-screen')
+
+    implementation "androidx.activity:activity:1.4.0"
+//    implementation "androidx.activity:activity-ktx:1.9.2"
+    implementation "androidx.activity:activity-ktx:1.4.0"
 }
 
 if (isNewArchitectureEnabled()) {

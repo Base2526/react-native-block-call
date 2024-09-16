@@ -4,6 +4,7 @@ import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.ReactRootView;
 import android.Manifest;
+import android.app.Activity;
 import android.app.role.RoleManager;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -17,6 +18,8 @@ import android.provider.Telephony;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,10 +31,13 @@ import java.util.Date;
 import java.util.List;
 // react-native-splash-screen >= 0.3.1
 import org.devio.rn.splashscreen.SplashScreen; // here
-
+import android.text.TextUtils;
 public class MainActivity extends ReactActivity {
   private static String TAG = MainActivity.class.getName();
   private static final int PERMISSIONS_REQUEST_CODE = 100;
+  private static final int REQUEST_CODE_DEFAULT_SMS = 101;
+
+  private ActivityResultLauncher<Intent> roleRequestLauncher;
 
   /**
    * Returns the name of the main component registered from JavaScript. This is used to schedule
@@ -79,17 +85,98 @@ public class MainActivity extends ReactActivity {
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.activity_main);
 
+    roleRequestLauncher = registerForActivityResult(
+      new ActivityResultContracts.StartActivityForResult(),
+      result -> {
+        if (result.getResultCode() == Activity.RESULT_OK) {
+          // Successfully became the default SMS app
+          Toast.makeText(this, "Successfully became the default SMS app.", Toast.LENGTH_SHORT).show();
+        } else {
+          // Failed to become the default SMS app
+          Toast.makeText(this, "Failed to become the default SMS app.", Toast.LENGTH_SHORT).show();
+        }
+      }
+    );
+
     requestPermissions();
+    requestDefaultSmsRole();
+
+    /*
     try{
-      if (!Telephony.Sms.getDefaultSmsPackage(getApplicationContext()).equals(getApplicationContext().getPackageName())) {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        RoleManager roleManager = (RoleManager) getSystemService(RoleManager.class);
+        // Check if the app has permission to be the default SMS app
+        boolean isRoleAvailable = roleManager.isRoleAvailable(RoleManager.ROLE_SMS);
+
+        if (isRoleAvailable) {
+          // Check whether your app is already holding the default SMS app role
+          boolean isRoleHeld = roleManager.isRoleHeld(RoleManager.ROLE_SMS);
+
+          if (!isRoleHeld) {
+            Intent roleRequestIntent = roleManager.createRequestRoleIntent(RoleManager.ROLE_SMS);
+            startActivityForResult(roleRequestIntent, REQUEST_CODE_DEFAULT_SMS);
+          } else {
+            // Permission for SMS is already granted
+          }
+        }
+      }else if (!isDefaultSmsApp()) {
         Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
-        intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getApplicationContext().getPackageName());
-        startActivity(intent);
+        intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
+        startActivityForResult(intent, REQUEST_CODE_DEFAULT_SMS);
       }
     }catch (Exception ex){
       Log.e(TAG, ex.toString());
     }
+    */
   }
+
+  public void requestDefaultSmsRole(){
+    try {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        RoleManager roleManager = (RoleManager) getSystemService(RoleManager.class);
+        // Check if the app has permission to be the default SMS app
+        boolean isRoleAvailable = roleManager.isRoleAvailable(RoleManager.ROLE_SMS);
+
+        if (isRoleAvailable) {
+          // Check whether your app is already holding the default SMS app role
+          boolean isRoleHeld = roleManager.isRoleHeld(RoleManager.ROLE_SMS);
+
+          if (!isRoleHeld) {
+            Intent roleRequestIntent = roleManager.createRequestRoleIntent(RoleManager.ROLE_SMS);
+            roleRequestLauncher.launch(roleRequestIntent);
+          } else {
+            // Permission for SMS is already granted
+            Log.i(TAG, "Permission for SMS is already granted");
+            Toast.makeText(this, "Permission for SMS is already granted.", Toast.LENGTH_SHORT).show();
+          }
+        }
+      } else if (!isDefaultSmsApp()) {
+        Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+        intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
+        roleRequestLauncher.launch(intent);
+      }
+    } catch (Exception ex) {
+      Log.e(TAG, ex.toString());
+    }
+  }
+
+  private boolean isDefaultSmsApp() {
+    return getPackageName().equals(Telephony.Sms.getDefaultSmsPackage(this));
+  }
+
+  public void promptUserToSetDefaultSmsApp() {
+    String packageName = getPackageName();
+    String defaultSmsPackage = Telephony.Sms.getDefaultSmsPackage(this);
+
+    if (!TextUtils.equals(packageName, defaultSmsPackage)) {
+      Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+      intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName);
+      startActivity(intent);
+    } else {
+      Toast.makeText(this, "App is already the default SMS app.", Toast.LENGTH_SHORT).show();
+    }
+  }
+
 
 //  WRITE_CALL_LOG
   private void requestPermissions() {
@@ -100,7 +187,8 @@ public class MainActivity extends ReactActivity {
             Manifest.permission.RECEIVE_SMS,
             Manifest.permission.ANSWER_PHONE_CALLS,
             Manifest.permission.READ_SMS,
-            Manifest.permission.READ_CONTACTS
+            Manifest.permission.SEND_SMS,
+            Manifest.permission.READ_CONTACTS,
     };
 
     List<String> permissionsNeeded = new ArrayList<>();
@@ -115,6 +203,21 @@ public class MainActivity extends ReactActivity {
     } else {
       // All permissions are already granted
       onPermissionsGranted();
+    }
+  }
+
+
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    if (requestCode == REQUEST_CODE_DEFAULT_SMS) {
+      if (isDefaultSmsApp()) {
+        // Successfully set as default SMS app
+        Toast.makeText(this, "App is now set as the default SMS app", Toast.LENGTH_SHORT).show();
+      } else {
+        // Failed to set as default SMS app
+        Toast.makeText(this, "Failed to set as default SMS app", Toast.LENGTH_SHORT).show();
+      }
     }
   }
 

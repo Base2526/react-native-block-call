@@ -28,8 +28,9 @@ const MyBlocklistStackScreen: React.FC<MyBlocklistStackScreenProps> = ({ navigat
   useLayoutEffect(() => {
     const routeName = getFocusedRouteNameFromRoute(route);
     
-    // // Hide tab bar for certain routes
-    if ( routeName === 'Profile' ||
+    // Hide tab bar for certain routes
+    if (  routeName === 'Profile' ||
+          routeName === 'CallLogsDetail' || 
           routeName === "SMSDetail" ||
           routeName === "Settings" ||
           routeName === 'HelpSendFeedback' ||  
