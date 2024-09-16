@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NativeModules } from 'react-native';
+import { NativeModules, NativeEventEmitter } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -8,7 +8,6 @@ import { Provider as ProviderPaper } from 'react-native-paper';
 import { useDispatch } from 'react-redux';
 import { ApolloProvider } from '@apollo/client';
 import SplashScreen from 'react-native-splash-screen';
-
 import { ToastProvider } from 'react-native-toast-notifications'
 
 import CallLogsStackScreen from "./pages/CallLogsStackScreen";
@@ -86,7 +85,19 @@ export const AppNavigator: React.FC = () => {
     fetchBlockList();
 
     setLoading(false)
+
   }, [])
+
+  // useEffect(() => {
+  //   const eventEmitter = new NativeEventEmitter(DatabaseHelper);
+  //   const subscription = eventEmitter.addListener('onSmsReceived', (data) => {
+  //     // Handle the data from the notification (sender, messageBody)
+  //     console.log('SMS Received:', data);
+  //     // Use this data to navigate or update the UI
+  //   });
+  //   // Cleanup the subscription
+  //   return () => subscription.remove();
+  // }, []);
 
   return (
     <NavigationContainer>
