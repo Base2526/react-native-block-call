@@ -2,13 +2,8 @@ import React from 'react';
 import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; 
 
-interface SearchModalProps {
-  visible: boolean;
-  onClose: () => void;
-  title: string;
-}
 
-const SearchScreen: React.FC<SearchModalProps> = ({ visible, onClose, title }) => {
+const SearchScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>

@@ -1,5 +1,6 @@
-import { View, TouchableOpacity, Text, StyleSheet, Image, TouchableWithoutFeedback } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, TouchableWithoutFeedback } from 'react-native';
 import { NavigationProp } from '@react-navigation/core'; 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Divider } from 'react-native-paper';
 
@@ -14,96 +15,92 @@ interface MenuProps {
 const DrawerContent: React.FC<MenuProps> = ({ isOpen, onClose, navigation }) => {
   if (!isOpen) return null;
 
+  const insets = useSafeAreaInsets();
+
   const { openLoginModal } = useMyContext();
-
-  const userProfile = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    image: '', // Replace with actual image URL
-  };
-
   return (
-    <TouchableWithoutFeedback onPress={() => onClose()}>
-      <View style={styles.overlay}>
-        <TouchableWithoutFeedback>
-          <View style={styles.drawerContent}>
-            {/* <>
-              <TouchableOpacity
-                style={styles.drawerItem}
-                onPress={() => {
-                  onClose();
-                  navigation.navigate("Profile");
-                }}>
-                <View style={styles.profileSection}>
-                  <View style={styles.avatarContainer}>
-                    {
-                      userProfile.image
-                      ? <Image source={{ uri: userProfile.image }} />
-                      : <MaterialCommunityIcons name="account" size={40} color="#aaa" />
-                    }
+      <TouchableWithoutFeedback onPress={() => onClose()}>
+        <View style={[styles.overlay, {marginTop: insets.top}]}>
+          <TouchableWithoutFeedback>
+            <View style={styles.drawerContent}>
+              {/* <>
+                <TouchableOpacity
+                  style={styles.drawerItem}
+                  onPress={() => {
+                    onClose();
+                    navigation.navigate("Profile");
+                  }}>
+                  <View style={styles.profileSection}>
+                    <View style={styles.avatarContainer}>
+                      {
+                        userProfile.image
+                        ? <Image source={{ uri: userProfile.image }} />
+                        : <MaterialCommunityIcons name="account" size={40} color="#aaa" />
+                      }
+                    </View>
+                    <View style={styles.profileInfo}>
+                      <Text style={styles.profileName}>{userProfile.name}</Text>
+                      <Text style={styles.profileEmail}>{userProfile.email}</Text>
+                    </View>
                   </View>
-                  <View style={styles.profileInfo}>
-                    <Text style={styles.profileName}>{userProfile.name}</Text>
-                    <Text style={styles.profileEmail}>{userProfile.email}</Text>
-                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.drawerItem}
+                  onPress={() =>{ 
+                    navigation.navigate('Settings');
+                    onClose();
+                  }}>
+                  <Icon name="cogs" size={20} style={{padding: 10}} />
+                  <Text style={styles.drawerItemText}>Settings</Text>
+                </TouchableOpacity>
+                <Divider />
+              </> */}
+
+            
+              <TouchableOpacity style={styles.buttonLogin} onPress={()=>{
+                openLoginModal();
+                onClose();
+              }}>
+                <View style={styles.buttonContent}>
+                  <Text style={styles.buttonText}>Login</Text>
                 </View>
               </TouchableOpacity>
-              <TouchableOpacity
+              
+              {/* <TouchableOpacity 
                 style={styles.drawerItem}
-                onPress={() =>{ 
-                  navigation.navigate('Settings');
+                onPress={() =>{
+                  navigation.navigate('HelpSendFeedback');
                   onClose();
                 }}>
-                <Icon name="cogs" size={20} style={{padding: 10}} />
-                <Text style={styles.drawerItemText}>Settings</Text>
+                <Icon name="question" size={20} style={{padding: 10}} />
+                <Text style={styles.drawerItemText}>Help & Send Feedback</Text>
+              </TouchableOpacity>
+              <Divider /> */}
+              <TouchableOpacity 
+                style={styles.drawerItem}
+                onPress={() =>{
+                  navigation.navigate('Policy');
+                  onClose();
+                }}>
+                <Icon name="user-shield" size={20} style={{padding: 10}} />
+                <Text style={styles.drawerItemText}>Private policy</Text>
               </TouchableOpacity>
               <Divider />
-            </> */}
+              <TouchableOpacity 
+                style={styles.drawerItem}
+                onPress={()=>{
+                  navigation.navigate('About');
+                  onClose();
+                }}>
+                <Icon name="question" size={20} style={{padding: 10}} />
+                <Text style={styles.drawerItemText}>About</Text>
+              </TouchableOpacity>
+              <Divider />
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
 
-          
-            <TouchableOpacity style={styles.buttonLogin} onPress={()=>{
-              openLoginModal();
-              onClose();
-            }}>
-              <View style={styles.buttonContent}>
-                <Text style={styles.buttonText}>Login</Text>
-              </View>
-            </TouchableOpacity>
-            
-            {/* <TouchableOpacity 
-              style={styles.drawerItem}
-              onPress={() =>{
-                navigation.navigate('HelpSendFeedback');
-                onClose();
-              }}>
-              <Icon name="question" size={20} style={{padding: 10}} />
-              <Text style={styles.drawerItemText}>Help & Send Feedback</Text>
-            </TouchableOpacity>
-            <Divider /> */}
-            <TouchableOpacity 
-              style={styles.drawerItem}
-              onPress={() =>{
-                navigation.navigate('Policy');
-                onClose();
-              }}>
-              <Icon name="user-shield" size={20} style={{padding: 10}} />
-              <Text style={styles.drawerItemText}>Private policy</Text>
-            </TouchableOpacity>
-            <Divider />
-            <TouchableOpacity 
-              style={styles.drawerItem}
-              onPress={()=>{
-                navigation.navigate('About');
-                onClose();
-              }}>
-              <Icon name="question" size={20} style={{padding: 10}} />
-              <Text style={styles.drawerItemText}>About</Text>
-            </TouchableOpacity>
-            <Divider />
-          </View>
-        </TouchableWithoutFeedback>
-      </View>
-    </TouchableWithoutFeedback>
   );
 };
 

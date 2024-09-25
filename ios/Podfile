@@ -9,6 +9,8 @@ target 'YourProjectName' do
 
   # Flags change depending on the env values.
   flags = get_default_flags()
+  
+  pod 'RNVectorIcons', :path => '../node_modules/react-native-vector-icons'
 
   use_react_native!(
     :path => config[:reactNativePath],

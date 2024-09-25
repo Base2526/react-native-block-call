@@ -4,14 +4,11 @@ import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { RouteProp } from '@react-navigation/native';
 import { NavigationProp } from '@react-navigation/core'; 
 import { createStackNavigator } from '@react-navigation/stack';
-import Icon from 'react-native-vector-icons/FontAwesome';
 
-import TabIconWithMenu from "../TabIconWithMenu";
 import CallLogsScreen from './CallLogsScreen';
 import CallLogsDetailScreen from "./CallLogsDetailScreen";
 import SearchScreen from "./SearchScreen";
 import SettingsScreen from "./SettingsScreen";
-import HelpSendFeedbackScreen from "./HelpSendFeedbackScreen";
 import AboutScreen from './AboutScreen';
 import ProfileScreen from "./ProfileScreen";
 import DrawerContent from "../DrawerContent";

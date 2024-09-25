@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NativeModules, NativeEventEmitter } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -80,12 +80,13 @@ export const AppNavigator: React.FC = () => {
   }
 
   useEffect(()=>{
-    fetchCallLogs();
-    fetchSmsLogs();
-    fetchBlockList();
+    if(Platform.OS === 'android'){
+      fetchCallLogs();
+      fetchSmsLogs();
+      fetchBlockList();
+    }
 
     setLoading(false)
-
   }, [])
 
   // useEffect(() => {
@@ -147,13 +148,13 @@ export const App: React.FC = () => {
 
   return (
     <ToastProvider>
-    <ApolloProvider client={client}>
-      <Provider store={store}>
-        <ProviderPaper>
-          <AppNavigator />
-        </ProviderPaper>
-      </Provider>
-    </ApolloProvider>
+      <ApolloProvider client={client}>
+        <Provider store={store}>
+          <ProviderPaper>
+            <AppNavigator />
+          </ProviderPaper>
+        </Provider>
+      </ApolloProvider>
     </ToastProvider>
   );
 };

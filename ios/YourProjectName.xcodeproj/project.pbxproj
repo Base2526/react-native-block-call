@@ -12,6 +12,7 @@
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		602D96232CA4277200C6E810 /* PhoneCallObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = 602D96222CA4277200C6E810 /* PhoneCallObserver.m */; };
 		605725312C6769BF00F30AB0 /* DatabaseHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 605725302C6769BF00F30AB0 /* DatabaseHelper.m */; };
 		605725392C67700100F30AB0 /* BridgeModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605725382C67700100F30AB0 /* BridgeModule.swift */; };
 		6057253B2C67754900F30AB0 /* BridgeModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 6057253A2C67754900F30AB0 /* BridgeModule.m */; };
@@ -44,6 +45,8 @@
 		5709B34CF0A7D63546082F79 /* Pods-YourProjectName.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YourProjectName.release.xcconfig"; path = "Target Support Files/Pods-YourProjectName/Pods-YourProjectName.release.xcconfig"; sourceTree = "<group>"; };
 		5B7EB9410499542E8C5724F5 /* Pods-YourProjectName-YourProjectNameTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YourProjectName-YourProjectNameTests.debug.xcconfig"; path = "Target Support Files/Pods-YourProjectName-YourProjectNameTests/Pods-YourProjectName-YourProjectNameTests.debug.xcconfig"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-YourProjectName.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-YourProjectName.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		602D96212CA4277200C6E810 /* PhoneCallObserver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PhoneCallObserver.h; sourceTree = "<group>"; };
+		602D96222CA4277200C6E810 /* PhoneCallObserver.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PhoneCallObserver.m; sourceTree = "<group>"; };
 		6057252F2C6769BF00F30AB0 /* DatabaseHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DatabaseHelper.h; sourceTree = "<group>"; };
 		605725302C6769BF00F30AB0 /* DatabaseHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DatabaseHelper.m; sourceTree = "<group>"; };
 		605725372C676FFF00F30AB0 /* YourProjectName-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "YourProjectName-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -105,6 +108,8 @@
 				605725382C67700100F30AB0 /* BridgeModule.swift */,
 				605725372C676FFF00F30AB0 /* YourProjectName-Bridging-Header.h */,
 				6057253A2C67754900F30AB0 /* BridgeModule.m */,
+				602D96212CA4277200C6E810 /* PhoneCallObserver.h */,
+				602D96222CA4277200C6E810 /* PhoneCallObserver.m */,
 			);
 			name = YourProjectName;
 			sourceTree = "<group>";
@@ -427,6 +432,7 @@
 			files = (
 				605725392C67700100F30AB0 /* BridgeModule.swift in Sources */,
 				605725312C6769BF00F30AB0 /* DatabaseHelper.m in Sources */,
+				602D96232CA4277200C6E810 /* PhoneCallObserver.m in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				6057253B2C67754900F30AB0 /* BridgeModule.m in Sources */,
@@ -506,16 +512,19 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = YourProjectName/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Block Call & SMS";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = "0.0.1-beta";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.blockcall;
 				PRODUCT_NAME = YourProjectName;
 				SWIFT_OBJC_BRIDGING_HEADER = "YourProjectName-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -532,16 +541,19 @@
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = YourProjectName/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Block Call & SMS";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = "0.0.1-beta";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.blockcall;
 				PRODUCT_NAME = YourProjectName;
 				SWIFT_OBJC_BRIDGING_HEADER = "YourProjectName-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;

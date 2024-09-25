@@ -102,7 +102,7 @@ public class MainActivity extends ReactActivity {
     );
   }
 
-  private void requestDefaultSmsRole(){
+  public void requestDefaultSmsRole(){
     try {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         RoleManager roleManager = (RoleManager) getSystemService(RoleManager.class);

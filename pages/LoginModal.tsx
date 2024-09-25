@@ -197,8 +197,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   featureText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#333333',
+    lineHeight: 24, // Adjust line height for better readability
+    textAlign: 'left', // Align text as needed
   },
   buttonFacebook: {
     backgroundColor: '#1877F2',

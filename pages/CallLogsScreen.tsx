@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, RefreshControl, FlatList, NativeModules } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, RefreshControl, FlatList, NativeModules, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; 
 import { useSelector, useDispatch } from 'react-redux';
 import { Menu, Divider } from 'react-native-paper';
